@@ -1,4 +1,4 @@
-package liblsdj
+package command
 
 const (
 	LSDJ_COMMAND_NONE          byte = 0x00
@@ -25,18 +25,3 @@ const (
 	LSDJ_COMMAND_ARDUINO_BOY_Q byte = 0x15
 	LSDJ_COMMAND_ARDUINO_BOY_Y byte = 0x16
 )
-
-type Lsdj_command_t struct {
-	command byte
-	value   byte
-}
-
-func (c Lsdj_command_t) Clear() {
-	c.command = 0
-	c.value = 0
-}
-
-func (dest Lsdj_command_t) CopyFrom(source Lsdj_command_t) {
-	dest.command = source.command
-	dest.value = source.value
-}

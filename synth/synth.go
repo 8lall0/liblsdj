@@ -1,26 +1,7 @@
-package liblsdj
-
-const (
-	LSDJ_SYNTH_WAVEFORM_SAWTOOTH byte = 0
-	LSDJ_SYNTH_WAVEFORM_SQUARE   byte = 1
-	LSDJ_SYNTH_WAVEFORM_TRIANGLE byte = 2
-
-	LSDJ_SYNTH_FILTER_LOW_PASS  byte = 0
-	LSDJ_SYNTH_FILTER_HIGH_PASS byte = 1
-	LSDJ_SYNTH_FILTER_BAND_PASS byte = 2
-	LSDJ_SYNTH_FILTER_ALL_PASS  byte = 3
-
-	LSDJ_SYNTH_DISTORTION_CLIP byte = 0
-	LSDJ_SYNTH_DISTORTION_WRAP byte = 1
-	LSDJ_SYNTH_DISTORTION_FOLD byte = 2
-
-	LSDJ_SYNTH_PHASE_NORMAL  byte = 0
-	LSDJ_SYNTH_PHASE_RESYNC  byte = 1
-	LSDJ_SYNTH_PHASE_RESYNC2 byte = 2
-)
+package synth
 
 // Structure representing soft synth data
-type Lsdj_synth_t struct {
+type Synth struct {
 	waveform       byte
 	filter         byte
 	resonanceStart byte
@@ -47,7 +28,7 @@ type Lsdj_synth_t struct {
 }
 
 // Clear all soft synth data to factory settings
-func (synth Lsdj_synth_t) Clear() {
+func (synth *Synth) Clear() {
 	synth.waveform = LSDJ_SYNTH_WAVEFORM_SAWTOOTH
 	synth.filter = LSDJ_SYNTH_FILTER_LOW_PASS
 	synth.resonanceStart = 0

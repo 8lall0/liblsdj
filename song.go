@@ -2,16 +2,16 @@ package liblsdj
 
 const (
 	LSDJ_SONG_DECOMPRESSED_SIZE byte = 0x8000 
-	LSDJ_ROW_COUNT byte = 256 
-	LSDJ_CHAIN_COUNT byte = 128 
-	LSDJ_PHRASE_COUNT byte = 0xFF 
-	LSDJ_INSTRUMENT_COUNT byte = 64 
-	LSDJ_SYNTH_COUNT byte = 16 
-	LSDJ_TABLE_COUNT byte = 32 
-	LSDJ_WAVE_COUNT byte = 256 
-	LSDJ_GROOVE_COUNT byte = 32 
-	LSDJ_WORD_COUNT byte = 42 
-	LSDJ_BOOKMARK_POSITION_COUNT byte = 16 
+	LSDJ_ROW_COUNT int = 256
+	LSDJ_CHAIN_COUNT int = 128
+	LSDJ_PHRASE_COUNT byte = 0xFF
+	LSDJ_INSTRUMENT_COUNT int = 64
+	LSDJ_SYNTH_COUNT int = 16
+	LSDJ_TABLE_COUNT int = 32
+	LSDJ_WAVE_COUNT int = 256
+	LSDJ_GROOVE_COUNT int = 32
+	LSDJ_WORD_COUNT int = 42
+	LSDJ_BOOKMARK_POSITION_COUNT int = 16
 	LSDJ_NO_BOOKMARK byte = 0xFF
 
 	LSDJ_CLONE_DEEP byte = 0
@@ -77,85 +77,99 @@ var LSDJ_PHRASE_LENGTH_ZERO = [LSDJ_PHRASE_LENGTH]byte{ 0, 0, 0, 0, 0, 0, 0, 0, 
 var LSDJ_PHRASE_LENGTH_FF = [LSDJ_PHRASE_LENGTH]byte{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
 
 
+type lsdj_song_bookmark_chans struct {
+	pulse1 [LSDJ_BOOKMARK_POSITION_COUNT]byte
+	pulse2 [LSDJ_BOOKMARK_POSITION_COUNT]byte
+	wave [LSDJ_BOOKMARK_POSITION_COUNT]byte
+	noise [LSDJ_BOOKMARK_POSITION_COUNT]byte
+}
+
+type lsdj_song_totalTime struct {
+	days byte
+	hours byte
+	minutes byte
+}
+
+type lsdj_song_workTime struct {
+	hours byte
+	minutes byte
+}
+
+type lsdj_song_metadata struct {
+	keyDelay byte
+	keyRepeat byte
+	font byte
+	sync byte
+	colorSet byte
+	clone byte
+	fileChangedFlag byte
+	powerSave byte
+	preListen byte
+	workTime *lsdj_song_workTime
+	totalTime *lsdj_song_totalTime
+}
+
 // An LSDJ song
-struct lsdj_song_t
-{
-	unsigned char formatVersion;
-	unsigned char tempo;
-	unsigned char transposition;
-	unsigned char drumMax;
+type Lsdj_song_t struct {
+	formatVersion byte
+	tempo byte
+	transposition byte
+	drumMax byte
 	// The sequences of chains in the song
-	lsdj_row_t rows[LSDJ_ROW_COUNT];
+	rows [LSDJ_ROW_COUNT]*Row
 	// The chains in the song
-	lsdj_chain_t* chains[LSDJ_CHAIN_COUNT];
+	chains [LSDJ_CHAIN_COUNT]*Chain
 	// The prases in the song
-	lsdj_phrase_t* phrases[LSDJ_PHRASE_COUNT];
+	phrases [LSDJ_PHRASE_COUNT]*Phrase
 	// Instruments of the song
-	lsdj_instrument_t* instruments[LSDJ_INSTRUMENT_COUNT];
+	instruments [LSDJ_INSTRUMENT_COUNT]Lsdj_instrument_t
 	// Soft synths of the song
-	lsdj_synth_t synths[LSDJ_SYNTH_COUNT];
+	synths [LSDJ_SYNTH_COUNT]*Synth
 	// Wave frames of the song
-	lsdj_wave_t waves[LSDJ_WAVE_COUNT];
+	waves [LSDJ_WAVE_COUNT]*Wave
 	// The tables in the song
-	lsdj_table_t* tables[LSDJ_TABLE_COUNT];
+	tables[LSDJ_TABLE_COUNT]*Table
 	// The grooves in the song
-	lsdj_groove_t grooves[LSDJ_GROOVE_COUNT];
+	grooves [LSDJ_GROOVE_COUNT]*Groove
 	// The speech synth words in the song
-	lsdj_word_t words[LSDJ_WORD_COUNT];
-	char wordNames[LSDJ_WORD_COUNT][LSDJ_WORD_NAME_LENGTH];
+	words [LSDJ_WORD_COUNT]*Word
+	wordNames [LSDJ_WORD_COUNT][LSDJ_WORD_NAME_LENGTH]string
 
 	// Bookmarks
-	union
-	{
-		struct
-		{
-			unsigned char pulse1[LSDJ_BOOKMARK_POSITION_COUNT];
-			unsigned char pulse2[LSDJ_BOOKMARK_POSITION_COUNT];
-			unsigned char wave[LSDJ_BOOKMARK_POSITION_COUNT];
-			unsigned char noise[LSDJ_BOOKMARK_POSITION_COUNT];
-		};
-		unsigned char channels[LSDJ_BOOKMARK_POSITION_COUNT][LSDJ_CHANNEL_COUNT];
-	} bookmarks;
+	bookmark *lsdj_song_bookmark_chans
+	bookChannels [LSDJ_BOOKMARK_POSITION_COUNT][LSDJ_CHANNEL_COUNT]byte
 
-	struct
-	{
-		unsigned char keyDelay;
-		unsigned char keyRepeat;
-		unsigned char font;
-		unsigned char sync;
-		unsigned char colorSet;
-		unsigned char clone;
-		unsigned char fileChangedFlag;
-		unsigned char powerSave;
-		unsigned char preListen;
+	meta *lsdj_song_metadata
 
-		struct
-		{
-			unsigned char days;
-			unsigned char hours;
-			unsigned char minutes;
-		} totalTime;
-
-		struct
-		{
-		unsigned char hours;
-		unsigned char minutes;
-		} workTime;
-	} meta;
-
-	unsigned char reserved1030[96];
-	unsigned char reserved1fba[70];
-	unsigned char reserved2000[32];
-	unsigned char reserved3fbf;
-	unsigned char reserved3fb9;
-	unsigned char reserved3fc6[10];
-	unsigned char reserved3fd1[47];
-	unsigned char reserved5fe0[32];
-	unsigned char reserved7ff2[13];
+	reserved1030 [96]byte
+	reserved1fba [70]byte
+	reserved2000 [32]byte
+	reserved3fbf byte
+	reserved3fb9 byte
+	reserved3fc6 [10]byte
+	reserved3fd1 [47]byte
+	reserved5fe0 [32]byte
+	reserved7ff2 [13]byte
 };
 
 // Create/free projects
-lsdj_song_t* lsdj_song_new(lsdj_error_t** error);
+func lsdj_song_new() {
+	var song Lsdj_song_t
+
+	song.formatVersion = 4
+	song.tempo = 128
+	song.transposition = 0
+	song.drumMax = 0x6C
+	for i := 0; i < LSDJ_ROW_COUNT; i++ {
+		song.rows[i].Clear()
+	}
+	for i := 0; i < LSDJ_CHAIN_COUNT; i++ {
+		song.chains[i].Clear()
+	}
+	for i := 0; i < LSDJ_PHRASE_COUNT; i++ {
+		song.chains[i].Clear()
+	}
+}
 lsdj_song_t* lsdj_song_copy(const lsdj_song_t* song, lsdj_error_t** error);
 void lsdj_song_free(lsdj_song_t* song);
 
