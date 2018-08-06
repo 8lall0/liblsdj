@@ -1,24 +1,24 @@
 package song
 
 import (
-	"github.com/8lall0/liblsdj/row"
 	"github.com/8lall0/liblsdj/chain"
-	"github.com/8lall0/liblsdj/phrase"
-	"github.com/8lall0/liblsdj/instrument"
-	"github.com/8lall0/liblsdj/synth"
-	"github.com/8lall0/liblsdj/wave"
-	"github.com/8lall0/liblsdj/table"
-	"github.com/8lall0/liblsdj/groove"
-	"github.com/8lall0/liblsdj/word"
 	"github.com/8lall0/liblsdj/channel"
+	"github.com/8lall0/liblsdj/groove"
+	"github.com/8lall0/liblsdj/instrument"
+	"github.com/8lall0/liblsdj/phrase"
+	"github.com/8lall0/liblsdj/row"
+	"github.com/8lall0/liblsdj/synth"
+	"github.com/8lall0/liblsdj/table"
+	"github.com/8lall0/liblsdj/wave"
+	"github.com/8lall0/liblsdj/word"
 )
 
 // An LSDJ song
 type Song struct {
 	formatVersion byte
-	tempo byte
+	tempo         byte
 	transposition byte
-	drumMax byte
+	drumMax       byte
 	// The sequences of chains in the song
 	rows [LSDJ_ROW_COUNT]*row.Row
 	// The chains in the song
@@ -32,39 +32,39 @@ type Song struct {
 	// Wave frames of the song
 	waves [LSDJ_WAVE_COUNT]*wave.Wave
 	// The tables in the song
-	tables[LSDJ_TABLE_COUNT]*table.Table
+	tables [LSDJ_TABLE_COUNT]*table.Table
 	// The grooves in the song
 	grooves [LSDJ_GROOVE_COUNT]*groove.Groove
 	// The speech synth words in the song
-	words [LSDJ_WORD_COUNT]*word.Word
-	wordNames [LSDJ_WORD_COUNT][word.LSDJ_WORD_NAME_LENGTH]string
+	words     [LSDJ_WORD_COUNT]*word.Word
+	wordNames [LSDJ_WORD_COUNT][word.LSDJ_WORD_NAME_LENGTH]byte
 
 	// Bookmarks
 	bookmarks struct {
 		pulse1 [LSDJ_BOOKMARK_POSITION_COUNT]byte
 		pulse2 [LSDJ_BOOKMARK_POSITION_COUNT]byte
-		wave [LSDJ_BOOKMARK_POSITION_COUNT]byte
-		noise [LSDJ_BOOKMARK_POSITION_COUNT]byte
+		wave   [LSDJ_BOOKMARK_POSITION_COUNT]byte
+		noise  [LSDJ_BOOKMARK_POSITION_COUNT]byte
 	}
 	bookChannels [LSDJ_BOOKMARK_POSITION_COUNT][channel.LSDJ_CHANNEL_COUNT]byte
 
-	metadata  struct {
-		keyDelay byte
-		keyRepeat byte
-		font byte
-		sync byte
-		colorSet byte
-		clone byte
+	metadata struct {
+		keyDelay        byte
+		keyRepeat       byte
+		font            byte
+		sync            byte
+		colorSet        byte
+		clone           byte
 		fileChangedFlag byte
-		powerSave byte
-		preListen byte
-		workTime struct {
-			hours byte
+		powerSave       byte
+		preListen       byte
+		workTime        struct {
+			hours   byte
 			minutes byte
 		}
 		totalTime struct {
-			days byte
-			hours byte
+			days    byte
+			hours   byte
 			minutes byte
 		}
 	}
@@ -78,12 +78,9 @@ type Song struct {
 	reserved3fd1 [47]byte
 	reserved5fe0 [32]byte
 	reserved7ff2 [13]byte
-};
+}
 
-// Create/free projects
-func lsdj_song_new() {
-	var song Song
-
+func (song *Song) Clear() {
 	song.formatVersion = 4
 	song.tempo = 128
 	song.transposition = 0
@@ -94,42 +91,172 @@ func lsdj_song_new() {
 	for i := 0; i < LSDJ_CHAIN_COUNT; i++ {
 		song.chains[i].Clear()
 	}
-	for i := 0; i < LSDJ_PHRASE_COUNT; i++ {
-		song.chains[i].Clear()
+	for i := 0; i < LSDJ_SYNTH_COUNT; i++ {
+		song.synths[i].Clear()
+	}
+	for i := 0; i < LSDJ_WAVE_COUNT; i++ {
+		song.waves[i].Clear()
+	}
+	for i := 0; i < LSDJ_TABLE_COUNT; i++ {
+		song.tables[i].Clear()
+	}
+	for i := 0; i < LSDJ_GROOVE_COUNT; i++ {
+		song.grooves[i].Clear()
+	}
+	for i := 0; i < LSDJ_WORD_COUNT; i++ {
+		song.words[i].Clear()
+	}
+	song.wordNames = DEFAULT_WORD_NAMES
+
+	song.metadata.keyDelay = 7
+	song.metadata.keyRepeat = 2
+	song.metadata.font = 0
+	song.metadata.sync = 0
+	song.metadata.colorSet = 0
+	song.metadata.clone = 0
+	song.metadata.powerSave = 0
+	song.metadata.preListen = 1
+
+	/*
+		TODO: do phrases and instruments
+		TODO: bookmarks
+	*/
+}
+
+func (song *Song) Copy() *Song {
+	return &(*song)
+}
+
+/*
+	TODO: All below
+	TODO: finish VIO and SAV
+*/
+func (song *Song) readBank0() {
+	for i := 0; byte(i) < LSDJ_PHRASE_COUNT; i++ {
+		if song.phrases[i] != nil {
+
+		}
 	}
 }
-lsdj_song_t* lsdj_song_copy(const lsdj_song_t* song, lsdj_error_t** error);
-void lsdj_song_free(lsdj_song_t* song);
+func (song *Song) writeBank0() {
 
-// Deserialize a song
-lsdj_song_t* lsdj_song_read(lsdj_vio_t* vio, lsdj_error_t** error);
-lsdj_song_t* lsdj_song_read_from_memory(const unsigned char* data, size_t size, lsdj_error_t** error);
+}
+func (song *Song) readBank1() {
 
-// Serialize a song
-void lsdj_song_write(const lsdj_song_t* song, lsdj_vio_t* vio, lsdj_error_t** error);
-void lsdj_song_write_to_memory(const lsdj_song_t* song, unsigned char* data, size_t size, lsdj_error_t** error);
+}
+func (song *Song) writeBank1() {
 
-// Change data in a song
-void lsdj_song_set_format_version(lsdj_song_t* song, unsigned char version);
-unsigned char lsdj_song_get_format_version(const lsdj_song_t* song);
-void lsdj_song_set_tempo(lsdj_song_t* song, unsigned char tempo);
-unsigned char lsdj_song_get_tempo(const lsdj_song_t* song);
-void lsdj_song_set_transposition(lsdj_song_t* song, unsigned char transposition);
-unsigned char lsdj_song_get_transposition(const lsdj_song_t* song);
-unsigned char lsdj_song_get_file_changed_flag(const lsdj_song_t* song);
-void lsdj_song_set_drum_max(lsdj_song_t* song, unsigned char drumMax);
-unsigned char lsdj_song_get_drum_max(const lsdj_song_t* song);
+}
+func (song *Song) readBank2() {
 
-lsdj_row_t* lsdj_song_get_row(lsdj_song_t* song, size_t index);
-lsdj_chain_t* lsdj_song_get_chain(lsdj_song_t* song, size_t index);
-lsdj_phrase_t* lsdj_song_get_phrase(lsdj_song_t* song, size_t index);
-lsdj_instrument_t* lsdj_song_get_instrument(lsdj_song_t* song, size_t index);
-lsdj_synth_t* lsdj_song_get_synth(lsdj_song_t* song, size_t index);
-lsdj_wave_t* lsdj_song_get_wave(lsdj_song_t* song, size_t index);
-lsdj_table_t* lsdj_song_get_table(lsdj_song_t* song, size_t index);
-lsdj_groove_t* lsdj_song_get_groove(lsdj_song_t* song, size_t index);
-lsdj_word_t* lsdj_song_get_word(lsdj_song_t* song, size_t index);
-void lsdj_song_set_word_name(lsdj_song_t* song, size_t index, const char* data, size_t size);
-void lsdj_song_get_word_name(lsdj_song_t* song, size_t index, char* data, size_t size);
-void lsdj_song_set_bookmark(lsdj_song_t* song, lsdj_channel_t channel, size_t position, unsigned char bookmark);
-unsigned char lsdj_song_get_bookmark(lsdj_song_t* song, lsdj_channel_t channel, size_t position);
+}
+func (song *Song) writeBank2() {
+
+}
+func (song *Song) readBank3() {
+
+}
+func (song *Song) writeBank3() {
+
+}
+func (song *Song) checkRB() {
+
+}
+
+func (song *Song) readSoftSynthParam() {
+
+}
+
+/*
+	Public
+*/
+
+func (song *Song) Read() {
+
+}
+func (song *Song) ReadFromMemory() {
+
+}
+
+func (song *Song) Write() {
+
+}
+func (song *Song) WriteToMemory() {
+
+}
+
+func (song *Song) GetFormatVersion() byte {
+	return song.formatVersion
+}
+func (song *Song) SetFormatVersion(formatVersion byte) {
+	song.formatVersion = formatVersion
+}
+
+func (song *Song) GetTempo() byte {
+	return song.tempo
+}
+func (song *Song) SetTempo(tempo byte) {
+	song.tempo = tempo
+}
+
+func (song *Song) GetTransposition() byte {
+	return song.transposition
+}
+func (song *Song) SetTransposition(transposition byte) {
+	song.transposition = transposition
+}
+
+func (song *Song) GetFileChangedFlag() byte {
+	return song.metadata.fileChangedFlag
+}
+
+func (song *Song) GetDrumMax(drumMax byte) {
+	song.drumMax = drumMax
+}
+func (song *Song) SetDrumMax() byte {
+	return song.drumMax
+}
+
+func (song *Song) GetRow(index int) *row.Row {
+	return song.rows[index]
+}
+func (song *Song) GetChain(index int) *chain.Chain {
+	return song.chains[index]
+}
+func (song *Song) GetPhrase(index int) *phrase.Phrase {
+	return song.phrases[index]
+}
+func (song *Song) GetInstrument(index int) *instrument.Instrument {
+	return song.instruments[index]
+}
+func (song *Song) GetSynth(index int) *synth.Synth {
+	return song.synths[index]
+}
+func (song *Song) GetWave(index int) *wave.Wave {
+	return song.waves[index]
+}
+func (song *Song) GetTable(index int) *table.Table {
+	return song.tables[index]
+}
+func (song *Song) GetGroove(index int) *groove.Groove {
+	return song.grooves[index]
+}
+func (song *Song) GetWord(index int) *word.Word {
+	return song.words[index]
+}
+
+/*
+BOH!
+*/
+
+func (song *Song) SetWordName() {
+
+}
+func (song *Song) GetWordName() {
+
+}
+
+func (song *Song) GetBookmark() {
+
+}
+func (song *Song) SetBookMark() {}

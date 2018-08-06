@@ -1,6 +1,9 @@
 package song
 
-import "github.com/8lall0/liblsdj/table"
+import (
+	"github.com/8lall0/liblsdj/table"
+	"github.com/8lall0/liblsdj/word"
+)
 
 const (
 	LSDJ_SONG_DECOMPRESSED_SIZE  byte = 0x8000
@@ -20,7 +23,7 @@ const (
 	LSDJ_CLONE_SLIM byte = 1
 )
 
-var DEFAULT_WORD_NAMES = [LSDJ_WORD_COUNT][LSDJ_WORD_NAME_LENGTH]byte{
+var DEFAULT_WORD_NAMES = [LSDJ_WORD_COUNT][word.LSDJ_WORD_NAME_LENGTH]byte{
 	{'C', ' ', '2', ' '},
 	{'C', ' ', '2', ' '},
 	{'D', ' ', '2', ' '},
