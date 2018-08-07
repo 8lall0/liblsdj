@@ -29,8 +29,7 @@ func (p *Project) ReadLsdsng() {
 	p.name = r.Read(LSDJ_PROJECT_NAME_LENGTH)
 	p.version = r.ReadSingle()
 	compression.Decompress(r, w)
-	//w.Finalize(song.LSDJ_SONG_DECOMPRESSED_SIZE)
-	//p.song.Read(w.Get())
+	p.song.Read(w.Get())
 
 	return
 

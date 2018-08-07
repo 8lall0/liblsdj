@@ -169,12 +169,10 @@ func (song *Song) readSoftSynthParam() {
 */
 
 func (song *Song) Read(b []byte) {
-	fmt.Println(len(b))
-	return
-	fmt.Println(string(b[7801]), string(b[7802]))
-	fmt.Println(string(b[16002]), string(b[16003]))
-	// test RB fallisce
-	fmt.Println(string(b[32751]), b[32751])
+	fmt.Println("RB checking...")
+	fmt.Println(string(b[7800]), string(b[7801]))
+	fmt.Println(string(b[16000]), string(b[16001]))
+	fmt.Println(string(b[32752]), string(b[32753]))
 }
 
 func (song *Song) Write() {

@@ -26,8 +26,7 @@ func (v *Vio) ReadSingle() byte {
 }
 
 func (v *Vio) Read(n int) []byte {
-	out := make([]byte, n)
-	copy(out, v.data[v.cur:(v.cur+n)])
+	out := v.data[v.cur:(v.cur + n)]
 	v.cur += n
 	return out
 }
@@ -47,13 +46,6 @@ func (v *Vio) Seek(offset int) {
 		v.cur = len(v.data)
 	} else {
 		v.cur = offset
-	}
-}
-
-func (v *Vio) Finalize(max int) {
-	if len(v.data) < max {
-		b := make([]byte, max-len(v.data))
-		v.Write(b)
 	}
 }
 
