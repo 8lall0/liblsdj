@@ -1,12 +1,13 @@
 package song
 
 import (
+	"github.com/8lall0/liblsdj/phrase"
 	"github.com/8lall0/liblsdj/table"
 	"github.com/8lall0/liblsdj/word"
 )
 
 const (
-	LSDJ_SONG_DECOMPRESSED_SIZE  byte = 0x8000
+	LSDJ_SONG_DECOMPRESSED_SIZE  int  = 32768 //0x8000
 	LSDJ_ROW_COUNT               int  = 256
 	LSDJ_CHAIN_COUNT             int  = 128
 	LSDJ_PHRASE_COUNT            byte = 0xFF
@@ -78,5 +79,5 @@ const (
 var LSDJ_TABLE_LENGTH_ZERO = [table.LSDJ_TABLE_LENGTH]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 var LSDJ_CHAIN_LENGTH_ZERO = [table.LSDJ_TABLE_LENGTH]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 var LSDJ_CHAIN_LENGTH_FF = [table.LSDJ_TABLE_LENGTH]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
-var LSDJ_PHRASE_LENGTH_ZERO = [table.LSDJ_PHRASE_LENGTH]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-var LSDJ_PHRASE_LENGTH_FF = [table.LSDJ_PHRASE_LENGTH]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+var LSDJ_PHRASE_LENGTH_ZERO = [phrase.LSDJ_PHRASE_LENGTH]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var LSDJ_PHRASE_LENGTH_FF = [phrase.LSDJ_PHRASE_LENGTH]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}

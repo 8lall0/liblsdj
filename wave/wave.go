@@ -7,7 +7,5 @@ type Wave struct {
 
 // Clear all wave data to factory settings
 func (wave *Wave) Clear() {
-	for i := 0; i < LSDJ_WAVE_LENGTH; i++ {
-		wave.data[i] = defaultWave[i]
-	}
+	wave.data = defaultWave
 }

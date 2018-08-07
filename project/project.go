@@ -1,6 +1,8 @@
 package project
 
 import (
+	"fmt"
+	"github.com/8lall0/liblsdj/compression"
 	"github.com/8lall0/liblsdj/song"
 	"github.com/8lall0/liblsdj/vio"
 )
@@ -16,18 +18,27 @@ type Project struct {
 	song *song.Song
 }
 
-type Data struct {
-	data []byte
-	ndx  int
-}
+func (p *Project) ReadLsdsng() {
+	r := new(vio.Vio)
+	w := new(vio.Vio)
+	/*
+		TODO: improve API. Maybe make a reader and a stupid writer?
+	*/
 
-/* Require VIO */
-func (p *Project) ReadLsdsng(f *Data) {
-	var decompressed [song.LSDJ_SONG_DECOMPRESSED_SIZE]byte
+	r.Open("3billetes.lsdsng")
+	p.name = r.Read(LSDJ_PROJECT_NAME_LENGTH)
+	p.version = r.ReadSingle()
+	compression.Decompress(r, w)
+	//w.Finalize(song.LSDJ_SONG_DECOMPRESSED_SIZE)
+	//p.song.Read(w.Get())
 
-	copy(f.data[0:LSDJ_PROJECT_NAME_LENGTH-1], p.name)
-	p.version = f.data[LSDJ_PROJECT_NAME_LENGTH]
+	return
 
+	//
+
+	//fmt.Println(writeVio);
+	fmt.Println(p.name)
+	return
 }
 
 func (p *Project) WriteLsdsng() {

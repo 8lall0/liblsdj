@@ -2,18 +2,18 @@ package instrument
 
 import (
 	"github.com/8lall0/liblsdj/panning"
-	)
-
-const (
-	LSDJ_INSTRUMENT_NAME_LENGTH int = 5
-	LSDJ_LSDJ_DEFAULT_INSTRUMENT_LENGTH int = 16
-
-	LSDJ_NO_TABLE byte = 0x20
-	LSDJ_INSTRUMENT_UNLIMITED_LENGTH byte = 0x40
-	LSDJ_KIT_LENGTH_AUTO byte = 0x0
 )
 
-var LSDJ_DEFAULT_INSTRUMENT = [LSDJ_LSDJ_DEFAULT_INSTRUMENT_LENGTH]byte{ 0, 0xA8, 0, 0, 0xFF, 0, 0, 3, 0, 0, 0xD0, 0, 0, 0, 0xF3, 0 };
+const (
+	LSDJ_INSTRUMENT_NAME_LENGTH         int = 5
+	LSDJ_LSDJ_DEFAULT_INSTRUMENT_LENGTH int = 16
+
+	LSDJ_NO_TABLE                    byte = 0x20
+	LSDJ_INSTRUMENT_UNLIMITED_LENGTH byte = 0x40
+	LSDJ_KIT_LENGTH_AUTO             byte = 0x0
+)
+
+var LSDJ_DEFAULT_INSTRUMENT = [LSDJ_LSDJ_DEFAULT_INSTRUMENT_LENGTH]byte{0, 0xA8, 0, 0, 0xFF, 0, 0, 3, 0, 0, 0xD0, 0, 0, 0, 0xF3, 0}
 
 const (
 	LSDJ_INSTR_PULSE = iota + 1
@@ -24,17 +24,17 @@ const (
 
 // Structure representing one instrument
 type Instrument struct {
-	name /*[LSDJ_INSTRUMENT_NAME_LENGTH]*/string
+	name/*[LSDJ_INSTRUMENT_NAME_LENGTH]*/ string
 	instrument_type int
 
 	panning panning.Panning
 
 	envVol struct {
 		envelope byte
-		volume byte
+		volume   byte
 	}
 
-	table byte // 0x20 or higher = LSDJ_NO_TABLE
+	table    byte // 0x20 or higher = LSDJ_NO_TABLE
 	automate byte
 
 	instrument struct {
@@ -53,7 +53,7 @@ func (dest *Instrument) CopyFrom(src *Instrument) {
 
 // Clear all instrument data to factory settings
 func (ins *Instrument) ClearInstrument() {
-	ins.name = "";
+	ins.name = ""
 	ins.ClearPulse()
 }
 
@@ -132,14 +132,14 @@ func (ins *Instrument) ClearNoise() {
 }
 
 func parseLength(b byte) byte {
-	if (b & 0x40 == 1) {
+	if b&0x40 == 1 {
 		return (^b) & 0x3F
 	}
 	return LSDJ_INSTRUMENT_UNLIMITED_LENGTH
 }
 
 func parseTable(b byte) byte {
-	if (b & 0x20 == 1) {
+	if b&0x20 == 1 {
 		return b & 0x1F
 	}
 	return LSDJ_NO_TABLE
@@ -150,23 +150,23 @@ func parsePanning(b byte) panning.Panning {
 }
 
 func parseDrumMode(b byte, vers byte) byte {
-	if (vers < 3) {
+	if vers < 3 {
 		return 0
 	}
-	if ((b & 0x40 == 1)) {
-		return 1;
+	if b&0x40 == 1 {
+		return 1
 	}
-	return 0;
+	return 0
 }
 
 func parseTranspose(b byte, vers byte) byte {
-	if (vers < 3) {
+	if vers < 3 {
 		return 0
 	}
-	if ((b & 0x20 == 1)) {
-		return 1;
+	if b&0x20 == 1 {
+		return 1
 	}
-	return 0;
+	return 0
 }
 
 func parseAutomate(b byte) byte {
@@ -186,7 +186,7 @@ func parseKitDistortion(b byte) lsdj_kit_distortion {
 }
 
 func parseScommand(b byte) lsdj_scommand_type {
-	return lsdj_scommand_type(b&1)
+	return lsdj_scommand_type(b & 1)
 }
 
 func (ins *Instrument) SetName(name string) {
@@ -204,6 +204,7 @@ func (ins *Instrument) SetPanning(pan panning.Panning) {
 func (ins *Instrument) GetPanning() panning.Panning {
 	return ins.panning
 }
+
 // Instrument I/O
 /*void lsdj_instrument_read(lsdj_vio_t* vio, unsigned char version, lsdj_instrument_t* instrument, lsdj_error_t** error);
-void lsdj_instrument_write(const lsdj_instrument_t* instrument, unsigned char version, lsdj_vio_t* vio, lsdj_error_t** error);
+void lsdj_instrument_write(const lsdj_instrument_t* instrument, unsigned char version, lsdj_vio_t* vio, lsdj_error_t** error);*/

@@ -1,6 +1,7 @@
 package song
 
 import (
+	"fmt"
 	"github.com/8lall0/liblsdj/chain"
 	"github.com/8lall0/liblsdj/channel"
 	"github.com/8lall0/liblsdj/groove"
@@ -127,10 +128,6 @@ func (song *Song) Copy() *Song {
 	return &(*song)
 }
 
-/*
-	TODO: All below
-	TODO: finish VIO and SAV
-*/
 func (song *Song) readBank0() {
 	for i := 0; byte(i) < LSDJ_PHRASE_COUNT; i++ {
 		if song.phrases[i] != nil {
@@ -171,11 +168,13 @@ func (song *Song) readSoftSynthParam() {
 	Public
 */
 
-func (song *Song) Read() {
-
-}
-func (song *Song) ReadFromMemory() {
-
+func (song *Song) Read(b []byte) {
+	fmt.Println(len(b))
+	return
+	fmt.Println(string(b[7801]), string(b[7802]))
+	fmt.Println(string(b[16002]), string(b[16003]))
+	// test RB fallisce
+	fmt.Println(string(b[32751]), b[32751])
 }
 
 func (song *Song) Write() {

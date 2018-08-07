@@ -5,7 +5,5 @@ type Groove struct {
 }
 
 func (t *Groove) Clear() {
-	for i := 0; i < LSDJ_GROOVE_LENGTH; i++ {
-		t.data[i] = defaultGroove[i]
-	}
+	t.data = defaultGroove
 }
