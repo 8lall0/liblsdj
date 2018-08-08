@@ -41,9 +41,9 @@ type synth struct {
 	limitStart byte
 	limitEnd   byte
 
-	reserved [2]byte
+	reserved []byte //2
 
-	overwritten bool
+	overwritten byte
 }
 
 // clear all soft synth groove to factory settings
@@ -66,5 +66,33 @@ func (s *synth) clear() {
 	s.limitEnd = 0xF
 	s.reserved[0] = 0
 	s.reserved[1] = 0
-	s.overwritten = false
+	s.overwritten = 0
+}
+
+func (s *synth) readSoftSynthParam(r *vio) {
+	s.waveform = r.readSingle()
+	s.filter = r.readSingle()
+
+	resonance := r.readSingle()
+	s.resonanceStart = (resonance & 0xF0) >> 4
+	s.resonanceEnd = resonance & 0x0F
+
+	s.distortion = r.readSingle()
+	s.phase = r.readSingle()
+
+	s.volumeStart = r.readSingle()
+	s.cutOffStart = r.readSingle()
+	s.phaseStart = r.readSingle()
+	s.vshiftStart = r.readSingle()
+
+	s.volumeEnd = r.readSingle()
+	s.cutOffEnd = r.readSingle()
+	s.phaseEnd = r.readSingle()
+	s.vshiftEnd = r.readSingle()
+
+	byte := 0xFF - r.readSingle()
+	s.limitStart = (byte >> 4) & 0xF
+	s.limitEnd = byte & 0xF
+
+	s.reserved = r.read(2)
 }

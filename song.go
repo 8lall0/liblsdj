@@ -156,150 +156,247 @@ type song struct {
 	reserved7ff2 []byte
 }
 
-func (song *song) Clear() {
-	song.formatVersion = 4
-	song.tempo = 128
-	song.transposition = 0
-	song.drumMax = 0x6C
+func (s *song) Clear() {
+	s.formatVersion = 4
+	s.tempo = 128
+	s.transposition = 0
+	s.drumMax = 0x6C
 
-	song.rows = make([]*row, lsdj_ROW_COUNT)
-	song.chains = make([]*chain, lsdj_CHAIN_COUNT)
-	song.synths = make([]*synth, lsdj_SYNTH_COUNT)
-	song.waves = make([]*wave, lsdj_WAVE_COUNT)
-	song.tables = make([]*table, lsdj_TABLE_COUNT)
-	song.grooves = make([]*groove, lsdj_GROOVE_COUNT)
-	song.words = make([]*word, lsdj_WORD_COUNT)
+	s.rows = make([]*row, lsdj_ROW_COUNT)
+	s.chains = make([]*chain, lsdj_CHAIN_COUNT)
+	s.synths = make([]*synth, lsdj_SYNTH_COUNT)
+	s.waves = make([]*wave, lsdj_WAVE_COUNT)
+	s.tables = make([]*table, lsdj_TABLE_COUNT)
+	s.grooves = make([]*groove, lsdj_GROOVE_COUNT)
+	s.words = make([]*word, lsdj_WORD_COUNT)
 
-	copy(song.wordNames, DEFAULT_WORD_NAMES)
+	copy(s.wordNames, DEFAULT_WORD_NAMES)
 
-	song.metadata.keyDelay = 7
-	song.metadata.keyRepeat = 2
-	song.metadata.font = 0
-	song.metadata.sync = 0
-	song.metadata.colorSet = 0
-	song.metadata.clone = 0
-	song.metadata.powerSave = 0
-	song.metadata.preListen = 1
-
-	/*
-		TODO: do phrases and instruments
-		TODO: bookmarks
-	*/
+	s.metadata.keyDelay = 7
+	s.metadata.keyRepeat = 2
+	s.metadata.font = 0
+	s.metadata.sync = 0
+	s.metadata.colorSet = 0
+	s.metadata.clone = 0
+	s.metadata.powerSave = 0
+	s.metadata.preListen = 1
 }
-func (song *song) Copy() *song {
-	return &(*song)
+func (s *song) Copy() *song {
+	return &(*s)
 }
-func (song *song) readBank0(r *vio) {
+func (s *song) readBank0(r *vio) {
 	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
-		if song.phrases[i] != nil {
-			song.phrases[i].notes = r.read(lsdj_PHRASE_LENGTH)
+		if s.phrases[i] != nil {
+			s.phrases[i].notes = r.read(lsdj_PHRASE_LENGTH)
 		} else {
 			r.seek(r.getCur() + lsdj_PHRASE_LENGTH)
 		}
 	}
-	song.bookmarks.pulse1 = r.read(lsdj_BOOKMARK_POSITION_COUNT)
-	song.bookmarks.pulse2 = r.read(lsdj_BOOKMARK_POSITION_COUNT)
-	song.bookmarks.wave = r.read(lsdj_BOOKMARK_POSITION_COUNT)
-	song.bookmarks.noise = r.read(lsdj_BOOKMARK_POSITION_COUNT)
+	// TODO: Ask for this! How to handle union???
+	// ALERT: ignoring bookChannels
+	s.bookmarks.pulse1 = r.read(lsdj_BOOKMARK_POSITION_COUNT)
+	s.bookmarks.pulse2 = r.read(lsdj_BOOKMARK_POSITION_COUNT)
+	s.bookmarks.wave = r.read(lsdj_BOOKMARK_POSITION_COUNT)
+	s.bookmarks.noise = r.read(lsdj_BOOKMARK_POSITION_COUNT)
 
-	/* Ask for this! How to handle union??? */
-	for i := 0; i < lsdj_BOOKMARK_POSITION_COUNT; i++ {
-		song.bookmarks.pulse1 = r.read(lsdj_BOOKMARK_POSITION_COUNT)
-		song.bookmarks.pulse2 = r.read(lsdj_BOOKMARK_POSITION_COUNT)
-		song.bookmarks.wave = r.read(lsdj_BOOKMARK_POSITION_COUNT)
-		song.bookmarks.noise = r.read(lsdj_BOOKMARK_POSITION_COUNT)
-	}
-	song.reserved1030 = r.read(reserved_1030)
+	s.reserved1030 = r.read(reserved_1030)
 
 	for i := 0; i < lsdj_GROOVE_COUNT; i++ {
-		song.grooves[i].groove = r.read(lsdj_GROOVE_LENGTH)
+		s.grooves[i].groove = r.read(lsdj_GROOVE_LENGTH)
 	}
+	// ALERT: ignoring channels
 	for i := 0; i < lsdj_ROW_COUNT; i++ {
-		song.rows[i].channelList.pulse1 = r.readSingle()
-		song.rows[i].channelList.pulse2 = r.readSingle()
-		song.rows[i].channelList.wave = r.readSingle()
-		song.rows[i].channelList.noise = r.readSingle()
-		song.rows[i].channels = r.read(lsdj_CHANNEL_COUNT)
+		s.rows[i].channelList.pulse1 = r.readSingle()
+		s.rows[i].channelList.pulse2 = r.readSingle()
+		s.rows[i].channelList.wave = r.readSingle()
+		s.rows[i].channelList.noise = r.readSingle()
+		//s.rows[i].channels = r.read(lsdj_CHANNEL_COUNT)
 	}
 
 	for i := 0; i < lsdj_TABLE_COUNT; i++ {
-		if song.tables[i] != nil {
-			song.tables[i].volumes = r.read(lsdj_TABLE_LENGTH)
+		if s.tables[i] != nil {
+			s.tables[i].volumes = r.read(lsdj_TABLE_LENGTH)
 		} else {
 			r.seek(r.getCur() + lsdj_TABLE_LENGTH)
 		}
 	}
 
 	for i := 0; i < lsdj_WORD_COUNT; i++ {
-		song.words[i].allophones = r.read(lsdj_WORD_LENGTH)
-		song.words[i].lengths = r.read(lsdj_WORD_LENGTH)
+		s.words[i].allophones = r.read(lsdj_WORD_LENGTH)
+		s.words[i].lengths = r.read(lsdj_WORD_LENGTH)
 	}
 
 	for i := 0; i < lsdj_WORD_COUNT; i++ {
-		song.wordNames[i] = r.read(lsdj_WORD_NAME_LENGTH)
+		s.wordNames[i] = r.read(lsdj_WORD_NAME_LENGTH)
 	}
 	// jumping RB
 	r.seek(r.getCur() + 2)
 
 	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
-		if song.instruments[i] != nil {
-			song.instruments[i].name = r.read(lsdj_INSTRUMENT_NAME_LENGTH)
+		if s.instruments[i] != nil {
+			s.instruments[i].name = r.read(lsdj_INSTRUMENT_NAME_LENGTH)
 		} else {
 			r.seek(r.getCur() + lsdj_INSTRUMENT_NAME_LENGTH)
 		}
 	}
 
-	song.reserved1fba = r.read(reserved_1fba)
+	s.reserved1fba = r.read(reserved_1fba)
 }
 func (song *song) writeBank0() {
 
 }
-func (song *song) readBank1(r *vio) {
-	song.reserved2000 = r.read(reserved_2000)
+func (s *song) readBank1(r *vio) {
+	s.reserved2000 = r.read(reserved_2000)
 
+	// table and instr alloc tables already read at beginning
 	r.seek(r.getCur() + lsdj_TABLE_ALLOC_TABLE_SIZE + lsdj_INSTR_ALLOC_TABLE_SIZE)
 
+	for i := 0; i < lsdj_CHAIN_COUNT; i++ {
+		if s.chains[i] != nil {
+			s.chains[i].transpositions = r.read(lsdj_CHAIN_LENGTH)
+		} else {
+			r.seek(r.getCur() + lsdj_CHAIN_LENGTH)
+		}
+	}
+	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
+		if s.instruments[i] != nil {
+			// Qua mi serve instrument_read
+		} else {
+			r.seek(r.getCur() + lsdj_INSTRUMENT_COUNT)
+		}
+	}
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if s.tables[i] != nil {
+			// table get command1
+		} else {
+			r.seek(r.getCur() + lsdj_TABLE_COUNT)
+		}
+	}
+	// ALERT: duplicates in the original code!!!
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if s.tables[i] != nil {
+			// table get command2
+		} else {
+			r.seek(r.getCur() + lsdj_TABLE_COUNT)
+		}
+	}
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if s.tables[i] != nil {
+			// table get command2
+		} else {
+			r.seek(r.getCur() + lsdj_TABLE_COUNT)
+		}
+	}
+
+	// jumping RB
+	r.seek(r.getCur() + 2)
+	// Already read at the beginning
+	r.seek(r.getCur() + lsdj_PHRASE_ALLOC_TABLE_SIZE + lsdj_CHAIN_ALLOC_TABLE_SIZE)
+
+	for i := 0; i < lsdj_SYNTH_COUNT; i++ {
+		s.synths[i].readSoftSynthParam(r)
+	}
+
+	s.metadata.workTime.hours = r.readSingle()
+	s.metadata.workTime.minutes = r.readSingle()
+	s.tempo = r.readSingle()
+	s.transposition = r.readSingle()
+	s.metadata.totalTime.days = r.readSingle()
+	s.metadata.totalTime.hours = r.readSingle()
+	s.metadata.totalTime.minutes = r.readSingle()
+	s.reserved3fb9 = r.readSingle()
+	s.metadata.keyDelay = r.readSingle()
+	s.metadata.keyRepeat = r.readSingle()
+	s.metadata.font = r.readSingle()
+	s.metadata.sync = r.readSingle()
+	s.metadata.colorSet = r.readSingle()
+	s.reserved3fbf = r.readSingle()
+	s.metadata.clone = r.readSingle()
+	s.metadata.fileChangedFlag = r.readSingle()
+	s.metadata.powerSave = r.readSingle()
+	s.metadata.preListen = r.readSingle()
+
+	var waveSynthOverwriteLocks []byte // 2
+	waveSynthOverwriteLocks = r.read(2)
+	var i uint8
+	for i = 0; i < uint8(lsdj_SYNTH_COUNT); i++ {
+		s.synths[i].overwritten = (waveSynthOverwriteLocks[1-(i/8)] >> (i % 8)) & 1
+	}
+	s.reserved3fc6 = r.read(reserved_3fc6)
+	s.drumMax = r.readSingle()
+	s.reserved3fd1 = r.read(reserved_3fd1)
 }
 func (song *song) writeBank1() {
 
 }
-func (song *song) readBank2() {
-
+func (s *song) readBank2(r *vio) {
+	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
+		if s.phrases[i] != nil {
+			for j := 0; j < lsdj_PHRASE_LENGTH; j++ {
+				s.phrases[i].commands[j].command = r.readSingle()
+			}
+		} else {
+			r.seek(r.getCur() + lsdj_PHRASE_LENGTH)
+		}
+	}
+	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
+		if s.phrases[i] != nil {
+			for j := 0; j < lsdj_PHRASE_LENGTH; j++ {
+				s.phrases[i].commands[j].value = r.readSingle()
+			}
+		} else {
+			r.seek(r.getCur() + lsdj_PHRASE_LENGTH)
+		}
+	}
+	s.reserved5fe0 = r.read(reserved_5fe0)
 }
 func (song *song) writeBank2() {
 
 }
-func (song *song) readBank3() {
+func (s *song) readBank3(r *vio) {
+	for i := 0; i < lsdj_WAVE_COUNT; i++ {
+		s.waves[i].data = r.read(lsdj_WAVE_LENGTH)
+	}
 
+	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
+		if s.phrases[i] != nil {
+			s.phrases[i].instruments = r.read(lsdj_PHRASE_LENGTH)
+		} else {
+			r.seek(r.getCur() + lsdj_PHRASE_LENGTH)
+		}
+	}
+	// RB
+	r.seek(r.getCur() + 2)
+	s.reserved7ff2 = r.read(reserved_7ff2)
+	// Version number already read
+	r.seek(r.getCur() + 1)
 }
 func (song *song) writeBank3() {
 
 }
-func (song *song) checkRB(r *vio, i int) {
+func checkRB(r *vio, i int) {
 	r.seek(i)
 	fmt.Println(string(r.readSingle()), string(r.readSingle()))
-}
-func (song *song) readSoftSynthParam() {
 }
 
 /*
 	Public
 */
 
-func (song *song) Read(r *vio) {
+func (s *song) Read(r *vio) {
 	var instrAllocTable []byte
 	var tableAllocTable []byte
 	var chainAllocTable []byte
 	var phraseAllocTable []byte
 
 	fmt.Println("Check RB...")
-	song.checkRB(r, 7800)
-	song.checkRB(r, 16000)
-	song.checkRB(r, 32752)
-	//Everything is correct, so i initialize the song.
-	song.Clear()
+	checkRB(r, 7800)
+	checkRB(r, 16000)
+	checkRB(r, 32752)
+	//Everything is correct, so i initialize the s.
+	s.Clear()
 	r.seek(int(0x7fff))
-	song.formatVersion = r.readSingle()
+	s.formatVersion = r.readSingle()
 
 	r.seek(int(0x2020))
 	tableAllocTable = r.read(lsdj_TABLE_ALLOC_TABLE_SIZE)
@@ -309,12 +406,11 @@ func (song *song) Read(r *vio) {
 	phraseAllocTable = r.read(lsdj_PHRASE_ALLOC_TABLE_SIZE)
 	chainAllocTable = r.read(lsdj_CHAIN_ALLOC_TABLE_SIZE)
 
-	// Probabilmente allocazioni, probabilmente non necessaria
 	for i := 0; i < lsdj_TABLE_ALLOC_TABLE_SIZE; i++ {
 		if tableAllocTable[i] != 0 {
-			song.tables[i] = new(table)
+			s.tables[i] = new(table)
 		} else {
-			song.tables[i] = nil
+			s.tables[i] = nil
 		}
 	}
 	/*
@@ -322,35 +418,35 @@ func (song *song) Read(r *vio) {
 	*/
 	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
 		if instrAllocTable[i] != 0 {
-			song.instruments[i] = new(instrument)
+			s.instruments[i] = new(instrument)
 		} else {
-			song.instruments[i] = nil
+			s.instruments[i] = nil
 		}
 	}
-	// Capire perché porcodio ste robe
-	for i := 0; i < lsdj_CHAIN_COUNT; i++ {
-		if (chainAllocTable[i/8] >> (i % 8)) & 1 {
-			song.chains[i] = new(chain)
+	var i uint8
+	for i = 0; i < uint8(lsdj_CHAIN_COUNT); i++ {
+		if (chainAllocTable[i/8]>>(i%8))&1 == 1 {
+			s.chains[i] = new(chain)
 		} else {
-			song.chains[i] = nil
+			s.chains[i] = nil
 		}
 	}
-	for i := 0; i < int(lsdj_PHRASE_COUNT); i++ {
-		if (phraseAllocTable[i/8] >> (i % 8)) & 1 {
-			song.phrases[i] = new(phrase)
+	for i = 0; i < uint8(lsdj_PHRASE_COUNT); i++ {
+		if (phraseAllocTable[i/8]>>(i%8))&1 == 1 {
+			s.phrases[i] = new(phrase)
 		} else {
-			song.phrases[i] = nil
+			s.phrases[i] = nil
 		}
 	}
 
 	r.seek(0)
-	song.readBank0(r)
+	s.readBank0(r)
+	s.readBank1(r)
+	s.readBank2(r)
+	s.readBank3(r)
 }
 
 func (song *song) Write() {
-
-}
-func (song *song) WriteToMemory() {
 
 }
 
@@ -418,14 +514,7 @@ func (song *song) GetWord(index int) *word {
 BOH!
 */
 
-func (song *song) SetWordName() {
-
-}
-func (song *song) GetWordName() {
-
-}
-
-func (song *song) GetBookmark() {
-
-}
+func (song *song) SetWordName() {}
+func (song *song) GetWordName() {}
+func (song *song) GetBookmark() {}
 func (song *song) SetBookMark() {}
