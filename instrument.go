@@ -29,8 +29,9 @@ const (
 var lsdj_DEFAULT_INSTRUMENT = [lsdj_LSDJ_DEFAULT_INSTRUMENT_LENGTH]byte{0, 0xA8, 0, 0, 0xFF, 0, 0, 3, 0, 0, 0xD0, 0, 0, 0, 0xF3, 0}
 
 type instrument interface {
-	read()
+	read(*vio, byte)
 	clear()
+	setName([]byte)
 }
 
 func parseLength(b byte) byte {

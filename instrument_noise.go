@@ -46,3 +46,7 @@ func (i *noiseT) clear() {
 	i.noise.shape = 0xFF
 	i.noise.sCommand = lsdj_SCOMMAND_FREE
 }
+
+func (i *noiseT) setName(name []byte) {
+	i.name = name
+}

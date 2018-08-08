@@ -154,3 +154,7 @@ func (i *kitT) clear() {
 	i.kit.plvibSpeed = lsdj_PLVIB_FAST
 	i.kit.vibShape = lsdj_VIB_TRIANGLE
 }
+
+func (i *kitT) setName(name []byte) {
+	i.name = name
+}

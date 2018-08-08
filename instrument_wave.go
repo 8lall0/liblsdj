@@ -118,3 +118,7 @@ func (i *waveT) clear() {
 	i.wave.repeat = 0
 	i.wave.speed = 4
 }
+
+func (i *waveT) setName(name []byte) {
+	i.name = name
+}

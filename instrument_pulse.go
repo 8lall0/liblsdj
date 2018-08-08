@@ -110,3 +110,7 @@ func (i *pulseT) clear() {
 	i.pulse.pulse2tune = 0
 	i.pulse.fineTune = 0
 }
+
+func (i *pulseT) setName(name []byte) {
+	i.name = name
+}

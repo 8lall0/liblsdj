@@ -234,7 +234,7 @@ func (s *song) readBank0(r *vio) {
 
 	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
 		if s.instruments[i] != nil {
-			s.instruments[i].name = r.read(lsdj_INSTRUMENT_NAME_LENGTH)
+			s.instruments[i].setName(r.read(lsdj_INSTRUMENT_NAME_LENGTH))
 		} else {
 			r.seek(r.getCur() + lsdj_INSTRUMENT_NAME_LENGTH)
 		}
