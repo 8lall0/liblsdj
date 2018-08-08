@@ -24,7 +24,7 @@ func (p *Project) ReadLsdsng() {
 
 	r.open("3billetes.lsdsng")
 	p.name = r.read(lsdj_PROJECT_NAME_LENGTH)
-	p.version = r.readSingle()
+	p.version = r.readByte()
 	p.song = new(song)
 	// decompress the songg
 	decompress(r, w)

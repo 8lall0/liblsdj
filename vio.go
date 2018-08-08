@@ -19,7 +19,7 @@ func (v *vio) open(path string) {
 	v.data = data
 }
 
-func (v *vio) readSingle() byte {
+func (v *vio) readByte() byte {
 	out := v.data[v.cur]
 	v.cur += 1
 	return out
@@ -31,7 +31,7 @@ func (v *vio) read(n int) []byte {
 	return out
 }
 
-func (v *vio) writeSingle(b byte) {
+func (v *vio) writeByte(b byte) {
 	v.data = append(v.data, b)
 	v.cur++
 }
@@ -46,6 +46,14 @@ func (v *vio) seek(offset int) {
 		v.cur = len(v.data)
 	} else {
 		v.cur = offset
+	}
+}
+
+func (v *vio) seekCur(offset int) {
+	if len(v.data) < offset {
+		v.cur = len(v.data)
+	} else {
+		v.cur += offset
 	}
 }
 

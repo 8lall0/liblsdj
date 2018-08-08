@@ -20,7 +20,6 @@ const (
 )
 
 type kitT struct {
-	name     []byte //lsdj_INSTRUMENT_NAME_LENGTH]
 	insType  int
 	panning  panning
 	volume   byte
@@ -50,23 +49,23 @@ func (i *kitT) read(r *vio, ver byte) {
 	var b byte
 
 	i.insType = lsdj_INSTR_KIT
-	i.volume = r.readSingle()
+	i.volume = r.readByte()
 
 	i.kit.loop1 = lsdj_KIT_LOOP_OFF
 	i.kit.loop2 = lsdj_KIT_LOOP_OFF
 
-	b = r.readSingle()
+	b = r.readByte()
 	if (b>>7)&1 == 1 {
 		i.kit.loop1 = lsdj_KIT_LOOP_ATTACK
 	}
 	i.kit.halfSpeed = (b >> 6) & 1
 	i.kit.kit1 = b & 0x3F
-	i.kit.length1 = r.readSingle()
+	i.kit.length1 = r.readByte()
 
 	// Byte 4 is empty
 	r.seek(r.getCur() + 1)
 
-	b = r.readSingle()
+	b = r.readByte()
 	if i.kit.loop1 != lsdj_KIT_LOOP_ATTACK {
 		if (b & 0x40) == 1 {
 			i.kit.loop1 = lsdj_KIT_LOOP_ON
@@ -113,20 +112,20 @@ func (i *kitT) read(r *vio, ver byte) {
 		}
 	}
 
-	i.table = parseTable(r.readSingle())
-	i.panning = parsePanning(r.readSingle())
-	i.kit.pitch = r.readSingle()
+	i.table = parseTable(r.readByte())
+	i.panning = parsePanning(r.readByte())
+	i.kit.pitch = r.readByte()
 
-	b = r.readSingle()
+	b = r.readByte()
 	if (b>>7)&1 == 1 {
 		i.kit.loop2 = lsdj_KIT_LOOP_ATTACK
 	}
 	i.kit.kit2 = b & 0x3F
 
-	i.kit.distortion = parseKitDistortion(r.readSingle())
-	i.kit.length2 = r.readSingle()
-	i.kit.offset1 = r.readSingle()
-	i.kit.offset2 = r.readSingle()
+	i.kit.distortion = parseKitDistortion(r.readByte())
+	i.kit.length2 = r.readByte()
+	i.kit.offset1 = r.readByte()
+	i.kit.offset2 = r.readByte()
 
 	r.seek(r.getCur() + 2)
 }
@@ -153,8 +152,4 @@ func (i *kitT) clear() {
 	i.kit.distortion = lsdj_KIT_DIST_CLIP
 	i.kit.plvibSpeed = lsdj_PLVIB_FAST
 	i.kit.vibShape = lsdj_VIB_TRIANGLE
-}
-
-func (i *kitT) setName(name []byte) {
-	i.name = name
 }

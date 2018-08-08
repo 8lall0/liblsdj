@@ -10,7 +10,6 @@ const (
 )
 
 type pulseT struct {
-	name     []byte /*[lsdj_INSTRUMENT_NAME_LENGTH]*/
 	insType  int
 	panning  panning
 	envelope byte // envelope or byte
@@ -34,12 +33,12 @@ func (i *pulseT) read(r *vio, ver byte) {
 	var b byte
 
 	i.insType = lsdj_INSTR_PULSE
-	i.envelope = r.readSingle()
-	i.pulse.pulse2tune = r.readSingle()
-	i.pulse.length = parseLength(r.readSingle())
-	i.pulse.sweep = r.readSingle()
+	i.envelope = r.readByte()
+	i.pulse.pulse2tune = r.readByte()
+	i.pulse.length = parseLength(r.readByte())
+	i.pulse.sweep = r.readByte()
 
-	b = r.readSingle()
+	b = r.readByte()
 	i.pulse.drumMode = parseDrumMode(b, ver)
 	i.pulse.transpose = parseTranspose(b, ver)
 	i.automate = parseAutomate(b)
@@ -79,9 +78,9 @@ func (i *pulseT) read(r *vio, ver byte) {
 		}
 	}
 
-	b = r.readSingle()
+	b = r.readByte()
 	i.table = parseTable(b)
-	b = r.readSingle()
+	b = r.readByte()
 	i.pulse.pulseWidth = parsePulseWidth(b)
 	i.pulse.fineTune = (b >> 2) & 0xF
 
@@ -109,8 +108,4 @@ func (i *pulseT) clear() {
 	i.pulse.drumMode = 0
 	i.pulse.pulse2tune = 0
 	i.pulse.fineTune = 0
-}
-
-func (i *pulseT) setName(name []byte) {
-	i.name = name
 }

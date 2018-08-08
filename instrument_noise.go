@@ -8,7 +8,6 @@ const (
 )
 
 type noiseT struct {
-	name     []byte /*[lsdj_INSTRUMENT_NAME_LENGTH]*/
 	insType  int
 	panning  panning
 	envelope byte // envelope or byte
@@ -24,12 +23,12 @@ type noiseT struct {
 func (i *noiseT) read(r *vio, ver byte) {
 	i.insType = lsdj_INSTR_NOISE
 
-	i.noise.sCommand = parseScommand(r.readSingle())
-	i.noise.length = parseLength(r.readSingle())
-	i.noise.shape = r.readSingle()
-	i.automate = parseAutomate(r.readSingle())
-	i.table = parseTable(r.readSingle())
-	i.panning = parsePanning(r.readSingle())
+	i.noise.sCommand = parseScommand(r.readByte())
+	i.noise.length = parseLength(r.readByte())
+	i.noise.shape = r.readByte()
+	i.automate = parseAutomate(r.readByte())
+	i.table = parseTable(r.readByte())
+	i.panning = parsePanning(r.readByte())
 
 	// Bytes 8-15 are empty
 	r.seek(r.getCur() + 8)
@@ -45,8 +44,4 @@ func (i *noiseT) clear() {
 	i.noise.length = lsdj_INSTRUMENT_UNLIMITED_LENGTH
 	i.noise.shape = 0xFF
 	i.noise.sCommand = lsdj_SCOMMAND_FREE
-}
-
-func (i *noiseT) setName(name []byte) {
-	i.name = name
 }

@@ -10,7 +10,6 @@ const (
 )
 
 type waveT struct {
-	name     []byte /*[lsdj_INSTRUMENT_NAME_LENGTH]*/
 	insType  int
 	panning  panning
 	volume   byte
@@ -34,16 +33,16 @@ func (i *waveT) read(r *vio, ver byte) {
 	var b byte
 
 	i.insType = lsdj_INSTR_WAVE
-	i.volume = r.readSingle()
+	i.volume = r.readByte()
 
-	b = r.readSingle()
+	b = r.readByte()
 	i.wave.synth = (b >> 4) & 0xF
 	i.wave.repeat = b & 0xF
 
 	// Bytes 3 and 4 are empty
 	r.seek(r.getCur() + 2)
 
-	b = r.readSingle()
+	b = r.readByte()
 	i.wave.drumMode = parseDrumMode(b, ver)
 	i.wave.transpose = parseTranspose(b, ver)
 	i.automate = parseAutomate(b)
@@ -86,14 +85,14 @@ func (i *waveT) read(r *vio, ver byte) {
 	// TODO: chiedi del kit nell'audio
 	//instrument->kit.vibratoDirection = (byte & 1) == 1 ? LSDJ_VIB_UP : LSDJ_VIB_DOWN;
 
-	i.table = parseTable(r.readSingle())
-	i.panning = parsePanning(r.readSingle())
+	i.table = parseTable(r.readByte())
+	i.panning = parsePanning(r.readByte())
 	// Byte 8 is empty
 	r.seek(r.getCur() + 1)
-	i.wave.playback = parsePlaybackMode(r.readSingle())
+	i.wave.playback = parsePlaybackMode(r.readByte())
 	// Bytes 10-13 are empty
 	r.seek(r.getCur() + 4)
-	b = r.readSingle()
+	b = r.readByte()
 	i.wave.length = (b >> 4) & 0xF
 	i.wave.speed = b & 0xF
 
@@ -117,8 +116,4 @@ func (i *waveT) clear() {
 	i.wave.length = 0x0F
 	i.wave.repeat = 0
 	i.wave.speed = 4
-}
-
-func (i *waveT) setName(name []byte) {
-	i.name = name
 }

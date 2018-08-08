@@ -16,13 +16,13 @@ var lsdj_DEFAULT_INSTRUMENT_COMPRESSION = []byte{0xA8, 0, 0, 0xFF, 0, 0, 3, 0, 0
 
 func decompressRleByte(r *vio, w *vio) {
 	var b, cnt byte
-	b = r.readSingle()
+	b = r.readByte()
 	if b == RUN_LENGTH_ENCODING_BYTE {
-		w.writeSingle(b)
+		w.writeByte(b)
 	} else {
-		cnt = r.readSingle()
+		cnt = r.readByte()
 		for i := 0; i < int(cnt); i++ {
-			w.writeSingle(b)
+			w.writeByte(b)
 		}
 	}
 }
@@ -30,7 +30,7 @@ func decompressRleByte(r *vio, w *vio) {
 func decompressDefWaveByte(r *vio, w *vio) {
 	var cnt byte
 
-	cnt = r.readSingle()
+	cnt = r.readByte()
 	for i := 0; i < int(cnt); i++ {
 		w.write(lsdj_DEFAULT_WAVE)
 	}
@@ -39,7 +39,7 @@ func decompressDefWaveByte(r *vio, w *vio) {
 func decompressDefInstrumentByte(r *vio, w *vio) {
 	var cnt byte
 
-	cnt = r.readSingle()
+	cnt = r.readByte()
 	for i := 0; i < int(cnt); i++ {
 		w.write(lsdj_DEFAULT_INSTRUMENT_COMPRESSION)
 	}
@@ -48,9 +48,9 @@ func decompressDefInstrumentByte(r *vio, w *vio) {
 func decompressSaByte(r *vio, w *vio, reading *bool, offset int, nBlock *int) {
 	var b byte
 
-	b = r.readSingle()
+	b = r.readByte()
 	if b == SPECIAL_ACTION_BYTE {
-		w.writeSingle(b)
+		w.writeByte(b)
 	} else if b == LSDJ_DEFAULT_WAVE_BYTE {
 		decompressDefWaveByte(r, w)
 	} else if b == LSDJ_DEFAULT_INSTRUMENT_BYTE {
@@ -70,13 +70,13 @@ func decompress(r *vio, w *vio) {
 	curPos := r.getCur()
 
 	for reading {
-		b = r.readSingle()
+		b = r.readByte()
 		if b == RUN_LENGTH_ENCODING_BYTE {
 			decompressRleByte(r, w)
 		} else if b == SPECIAL_ACTION_BYTE {
 			decompressSaByte(r, w, &reading, curPos, &nBlock)
 		} else {
-			w.writeSingle(b)
+			w.writeByte(b)
 		}
 	}
 	fmt.Println("Size: ", len(w.get()))

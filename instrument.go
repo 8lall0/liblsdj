@@ -29,9 +29,35 @@ const (
 var lsdj_DEFAULT_INSTRUMENT = [lsdj_LSDJ_DEFAULT_INSTRUMENT_LENGTH]byte{0, 0xA8, 0, 0, 0xFF, 0, 0, 3, 0, 0, 0xD0, 0, 0, 0, 0xF3, 0}
 
 type instrument interface {
-	read(*vio, byte)
+	read(r *vio, ver byte)
 	clear()
-	setName([]byte)
+}
+
+type instrumentContainer struct {
+	name           []byte //lsdj_INSTRUMENT_NAME_LENGTH]
+	instrumentType int
+	instrument     instrument
+}
+
+func (ic *instrumentContainer) read(r *vio, version byte) {
+	var iType byte
+
+	iType = r.readByte()
+	switch (int(iType)) {
+	case 0:
+		ic.instrumentType = lsdj_INSTR_PULSE
+		ic.instrument = new (pulseT)
+	case 1:
+		ic.instrumentType = lsdj_INSTR_WAVE
+		ic.instrument = new (waveT)
+	case 2:
+		ic.instrumentType = lsdj_INSTR_KIT
+		ic.instrument = new (kitT)
+	case 3:
+		ic.instrumentType = lsdj_INSTR_NOISE
+		ic.instrument = new (noiseT)
+	}
+	ic.instrument.read(r, version)
 }
 
 func parseLength(b byte) byte {

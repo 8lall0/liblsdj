@@ -70,27 +70,27 @@ func (s *synth) clear() {
 }
 
 func (s *synth) readSoftSynthParam(r *vio) {
-	s.waveform = r.readSingle()
-	s.filter = r.readSingle()
+	s.waveform = r.readByte()
+	s.filter = r.readByte()
 
-	resonance := r.readSingle()
+	resonance := r.readByte()
 	s.resonanceStart = (resonance & 0xF0) >> 4
 	s.resonanceEnd = resonance & 0x0F
 
-	s.distortion = r.readSingle()
-	s.phase = r.readSingle()
+	s.distortion = r.readByte()
+	s.phase = r.readByte()
 
-	s.volumeStart = r.readSingle()
-	s.cutOffStart = r.readSingle()
-	s.phaseStart = r.readSingle()
-	s.vshiftStart = r.readSingle()
+	s.volumeStart = r.readByte()
+	s.cutOffStart = r.readByte()
+	s.phaseStart = r.readByte()
+	s.vshiftStart = r.readByte()
 
-	s.volumeEnd = r.readSingle()
-	s.cutOffEnd = r.readSingle()
-	s.phaseEnd = r.readSingle()
-	s.vshiftEnd = r.readSingle()
+	s.volumeEnd = r.readByte()
+	s.cutOffEnd = r.readByte()
+	s.phaseEnd = r.readByte()
+	s.vshiftEnd = r.readByte()
 
-	byte := 0xFF - r.readSingle()
+	byte := 0xFF - r.readByte()
 	s.limitStart = (byte >> 4) & 0xF
 	s.limitEnd = byte & 0xF
 
