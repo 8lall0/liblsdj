@@ -80,5 +80,9 @@ func decompress(r *vio, w *vio) {
 		}
 	}
 	fmt.Println("Size: ", len(w.get()))
+}
+
+func compress() {
+	var defaultWaveLengthCount byte
 
 }

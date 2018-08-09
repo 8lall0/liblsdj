@@ -86,6 +86,27 @@ func (p phraseA) readCommand(r *vio) {
 	}
 }
 
+func (p phraseA) writeCommand(w *vio) {
+	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
+		if p[i] != nil {
+			for j := 0; j < lsdj_PHRASE_LENGTH; j++ {
+				w.writeByte(p[i].commands[j].command)
+			}
+		} else {
+			w.write(lsdj_PHRASE_LENGTH_ZERO)
+		}
+	}
+	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
+		if p[i] != nil {
+			for j := 0; j < lsdj_PHRASE_LENGTH; j++ {
+				w.writeByte(p[i].commands[j].value)
+			}
+		} else {
+			w.write(lsdj_PHRASE_LENGTH_ZERO)
+		}
+	}
+}
+
 func (p phraseA) readInstrument(r *vio) {
 	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
 		if p[i] != nil {
@@ -96,13 +117,22 @@ func (p phraseA) readInstrument(r *vio) {
 	}
 }
 
-func (p phraseA) writePhraseAllocTable(w *vio) {
-	table := make([]byte, lsdj_PHRASE_ALLOC_TABLE_SIZE)
+func (p phraseA) writeInstrument(w *vio) {
 	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
 		if p[i] != nil {
-			table[i] = 1
+			w.write(p[i].instruments)
 		} else {
-			table[i] = 0
+			w.write(lsdj_PHRASE_LENGTH_FF)
+		}
+	}
+}
+
+func (p phraseA) writePhraseAllocTable(w *vio) {
+	var i uint8
+	table := make([]byte, lsdj_PHRASE_ALLOC_TABLE_SIZE)
+	for i = 0; i < uint8(lsdj_PHRASE_COUNT); i++ {
+		if p[i] != nil {
+			table[i/8] |= (1 << (i % 8))
 		}
 	}
 	w.write(table)

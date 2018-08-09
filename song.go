@@ -325,9 +325,11 @@ func (s *song) readBank2(r *vio) {
 
 	s.reserved5fe0 = r.read(reserved_5fe0)
 }
-func (song *song) writeBank2() {
-
+func (s *song) writeBank2(w *vio) {
+	s.phrases.writeCommand(w)
+	w.write(s.reserved5fe0)
 }
+
 func (s *song) readBank3(r *vio) {
 	s.waves.readWave(r)
 	s.phrases.readInstrument(r)
@@ -339,17 +341,18 @@ func (s *song) readBank3(r *vio) {
 	// Version number already setInstrument
 	r.seekCur(1)
 }
-func (song *song) writeBank3() {
+func (s *song) writeBank3(w *vio) {
+	s.waves.writeWave(w)
+	s.phrases.writeInstrument(w)
 
+	w.write([]byte("rb"))
+	w.write(s.reserved7ff2)
+	w.writeByte(s.formatVersion)
 }
 func checkRB(r *vio, i int) {
 	r.seek(i)
 	fmt.Println(string(r.readByte()), string(r.readByte()))
 }
-
-/*
-	Public
-*/
 
 func (s *song) Read(r *vio) {
 	var instrAllocTable []byte
@@ -386,8 +389,11 @@ func (s *song) Read(r *vio) {
 	s.readBank3(r)
 }
 
-func (song *song) Write() {
-
+func (s *song) Write(w *vio) {
+	s.writeBank0(w)
+	s.writeBank1(w)
+	s.writeBank2(w)
+	s.writeBank3(w)
 }
 
 func (song *song) GetFormatVersion() byte {

@@ -1,5 +1,7 @@
 package liblsdj
 
+import "fmt"
+
 const (
 	lsdj_PROJECT_NAME_LENGTH int = 8
 )
@@ -18,6 +20,7 @@ type Project struct {
 func (p *Project) ReadLsdsng() {
 	r := new(vio)
 	w := new(vio)
+	o := new(vio)
 	/*
 		TODO: improve API. Maybe make a reader and a stupid writer?
 	*/
@@ -29,6 +32,8 @@ func (p *Project) ReadLsdsng() {
 	// decompress the songg
 	decompress(r, w)
 	p.song.Read(w)
+	p.song.Write(o)
+	fmt.Println(o.data)
 }
 
 func (p *Project) WriteLsdsng() {

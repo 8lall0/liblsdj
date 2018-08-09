@@ -119,7 +119,7 @@ func (iC instrumentContainerA) writeInsName(w *vio) {
 func (iC instrumentContainerA) writeInsAllocTable(w *vio) {
 	table := make([]byte, lsdj_INSTR_ALLOC_TABLE_SIZE)
 	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
-		if t[i] != nil {
+		if iC[i] != nil {
 			table[i] = 1
 		} else {
 			table[i] = 0
