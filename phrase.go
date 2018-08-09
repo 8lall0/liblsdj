@@ -95,3 +95,15 @@ func (p phraseA) readInstrument(r *vio) {
 		}
 	}
 }
+
+func (p phraseA) writePhraseAllocTable(w *vio) {
+	table := make([]byte, lsdj_PHRASE_ALLOC_TABLE_SIZE)
+	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
+		if p[i] != nil {
+			table[i] = 1
+		} else {
+			table[i] = 0
+		}
+	}
+	w.write(table)
+}

@@ -281,8 +281,45 @@ func (s *song) writeBank1(w *vio) {
 	s.tables.writeTabAllocTable(w)
 	s.instruments.writeInsAllocTable(w)
 	s.chains.writeChain(w)
+	s.instruments.writeInstrument(w, s.formatVersion)
+	s.tables.writeTable(w, s.formatVersion)
 
+	w.write([]byte("rb"))
+
+	s.phrases.writePhraseAllocTable(w)
+	s.chains.writeChainAllocTable(w)
+	s.synths.writeSynthParam(w)
+
+	w.writeByte(s.metadata.workTime.hours)
+	w.writeByte(s.metadata.workTime.minutes)
+
+	w.writeByte(s.tempo)
+	w.writeByte(s.transposition)
+
+	w.writeByte(s.metadata.totalTime.days)
+	w.writeByte(s.metadata.totalTime.hours)
+	w.writeByte(s.metadata.totalTime.minutes)
+
+	w.writeByte(s.reserved3fb9)
+
+	w.writeByte(s.metadata.keyDelay)
+	w.writeByte(s.metadata.keyRepeat)
+	w.writeByte(s.metadata.font)
+	w.writeByte(s.metadata.sync)
+	w.writeByte(s.metadata.colorSet)
+	w.writeByte(s.reserved3fbf)
+	w.writeByte(s.metadata.clone)
+	w.writeByte(s.metadata.fileChangedFlag)
+	w.writeByte(s.metadata.powerSave)
+	w.writeByte(s.metadata.preListen)
+
+	s.synths.writeSynthOverwritten(w)
+
+	w.write(s.reserved3fc6)
+	w.writeByte(s.drumMax)
+	w.write(s.reserved3fd1)
 }
+
 func (s *song) readBank2(r *vio) {
 	s.phrases.readCommand(r)
 

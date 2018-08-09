@@ -67,3 +67,15 @@ func (c chainA) writeChain(w *vio) {
 		}
 	}
 }
+
+func (c chainA) writeChainAllocTable(w *vio) {
+	table := make([]byte, lsdj_CHAIN_ALLOC_TABLE_SIZE)
+	for i := 0; i < lsdj_CHAIN_COUNT; i++ {
+		if c[i] != nil {
+			table[i] = 1
+		} else {
+			table[i] = 0
+		}
+	}
+	w.write(table)
+}

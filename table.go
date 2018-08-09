@@ -135,3 +135,49 @@ func (t tableA) writeTabAllocTable(w *vio) {
 	}
 	w.write(table)
 }
+
+func (t tableA) writeTable(w *vio, version byte) {
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			w.write(t[i].transpositions)
+		} else {
+			w.write(lsdj_TABLE_LENGTH_ZERO)
+		}
+	}
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			for j := 0; j < lsdj_TABLE_LENGTH; j++ {
+				w.writeByte(t[i].commands1[j].command)
+			}
+		} else {
+			w.write(lsdj_TABLE_LENGTH_ZERO)
+		}
+	}
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			for j := 0; j < lsdj_TABLE_LENGTH; j++ {
+				w.writeByte(t[i].commands1[j].value)
+			}
+		} else {
+			w.write(lsdj_TABLE_LENGTH_ZERO)
+		}
+	}
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			for j := 0; j < lsdj_TABLE_LENGTH; j++ {
+				w.writeByte(t[i].commands2[j].command)
+			}
+		} else {
+			w.write(lsdj_TABLE_LENGTH_ZERO)
+		}
+	}
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			for j := 0; j < lsdj_TABLE_LENGTH; j++ {
+				w.writeByte(t[i].commands2[j].value)
+			}
+		} else {
+			w.write(lsdj_TABLE_LENGTH_ZERO)
+		}
+	}
+}

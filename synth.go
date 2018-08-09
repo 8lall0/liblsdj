@@ -144,3 +144,18 @@ func (s synthA) readSynthOverwritten(r *vio) {
 		s[i].overwritten = (waveSynthOverwriteLocks[1-(i/8)] >> (i % 8)) & 1
 	}
 }
+
+func (s synthA) writeSynthOverwritten(w *vio) {
+	var i uint8
+	var waveSynthOverwriteLocks []byte
+
+	waveSynthOverwriteLocks = make([]byte, 2)
+
+	for i = 0; i < uint8(lsdj_SYNTH_COUNT); i++ {
+		if s[i].overwritten == 1 {
+			waveSynthOverwriteLocks[1-(i/8)] |= (1 << (i % 8))
+		}
+	}
+
+	w.write(waveSynthOverwriteLocks)
+}
