@@ -96,23 +96,23 @@ type song struct {
 	transposition byte
 	drumMax       byte
 	// The sequences of chains in the song
-	rows []*row //lsdj_ROW_COUNT
+	rows rowA
 	// The chains in the song
-	chains []*chain //lsdj_CHAIN_COUNT
+	chains chainA
 	// The prases in the song
-	phrases []*phrase //lsdj_PHRASE_COUNT
+	phrases phraseA
 	// Instruments of the song
-	instruments []*instrumentContainer //lsdj_INSTRUMENT_COUNT
+	instruments instrumentContainerA
 	// Soft synths of the song
-	synths []*synth //lsdj_SYNTH_COUNT
+	synths synthA
 	// wave frames of the song
-	waves []*wave //lsdj_WAVE_COUNT
+	waves waveA
 	// The tables in the song
-	tables []*table //lsdj_TABLE_COUNT
+	tables tableA
 	// The grooves in the song
-	grooves []*groove //lsdj_GROOVE_COUNT
+	grooves grooveA
 	// The speech synth words in the song
-	words     []*word  //lsdj_WORD_COUNT
+	words     wordA
 	wordNames [][]byte //[lsdj_WORD_COUNT][lsdj_WORD_NAME_LENGTH]
 
 	// Bookmarks
@@ -158,7 +158,7 @@ type song struct {
 
 /*
 	TODO: il problema è chiaro. Devi allocare e porcoddio. Valuta se spostare le letture nei singoli tipi
- */
+*/
 
 func (s *song) Clear() {
 	s.formatVersion = 4
@@ -166,15 +166,11 @@ func (s *song) Clear() {
 	s.transposition = 0
 	s.drumMax = 0x6C
 
-	s.rows = make([]*row, lsdj_ROW_COUNT)
-	s.chains = make([]*chain, lsdj_CHAIN_COUNT)
-	s.synths = make([]*synth, lsdj_SYNTH_COUNT)
-	s.waves = make([]*wave, lsdj_WAVE_COUNT)
-	s.tables = make([]*table, lsdj_TABLE_COUNT)
-	s.grooves = make([]*groove, lsdj_GROOVE_COUNT)
-	s.words = make([]*word, lsdj_WORD_COUNT)
-	s.phrases = make([]*phrase, lsdj_PHRASE_COUNT)
-	s.instruments = make([]*instrumentContainer, lsdj_INSTRUMENT_COUNT)
+	s.rows.initialize()
+	s.synths.initialize()
+	s.waves.initialize()
+	s.grooves.initialize()
+	s.words.initialize()
 
 	copy(s.wordNames, DEFAULT_WORD_NAMES)
 
@@ -191,15 +187,8 @@ func (s *song) Copy() *song {
 	return &(*s)
 }
 func (s *song) readBank0(r *vio) {
-	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
-		if s.phrases[i] != nil {
-			s.phrases[i].notes = r.read(lsdj_PHRASE_LENGTH)
-		} else {
-			r.seekCur(lsdj_PHRASE_LENGTH)
-		}
-	}
-	// TODO: Ask for this! How to handle union???
-	// ALERT: ignoring bookChannels
+	s.phrases.writeNotes(r)
+
 	s.bookmarks.pulse1 = r.read(lsdj_BOOKMARK_POSITION_COUNT)
 	s.bookmarks.pulse2 = r.read(lsdj_BOOKMARK_POSITION_COUNT)
 	s.bookmarks.wave = r.read(lsdj_BOOKMARK_POSITION_COUNT)
@@ -207,78 +196,43 @@ func (s *song) readBank0(r *vio) {
 
 	s.reserved1030 = r.read(reserved_1030)
 
+	s.grooves.write(r)
+	s.rows.write(r)
+	s.tables.write(r)
+	s.words.write(r)
+
 	/*
-		TODO: ora funziona, riscrivere in maniera decente i nuovi oggetti
-	 */
-	for i := 0; i < lsdj_GROOVE_COUNT; i++ {
-		s.grooves[i] = &groove{
-			r.read(lsdj_GROOVE_LENGTH),
-		}
-	}
-	// ALERT: ignoring channels
-	for i := 0; i < lsdj_ROW_COUNT; i++ {
-		s.rows[i] = new (row)
-		s.rows[i].channelList.pulse1 = r.readByte()
-		s.rows[i].channelList.pulse2 = r.readByte()
-		s.rows[i].channelList.wave = r.readByte()
-		s.rows[i].channelList.noise = r.readByte()
-		//s.rows[instrument].channels = r.read(lsdj_CHANNEL_COUNT)
-	}
-
-	for i := 0; i < lsdj_TABLE_COUNT; i++ {
-		if s.tables[i] != nil {
-			s.tables[i].volumes = r.read(lsdj_TABLE_LENGTH)
-		} else {
-			r.seekCur(lsdj_TABLE_LENGTH)
-		}
-	}
-
-	for i := 0; i < lsdj_WORD_COUNT; i++ {
-		s.words[i] = new (word)
-		s.words[i].allophones = r.read(lsdj_WORD_LENGTH)
-		s.words[i].lengths = r.read(lsdj_WORD_LENGTH)
-	}
+		TODO: wordnames???
+	*/
 
 	s.wordNames = make([][]byte, lsdj_WORD_COUNT)
 	for i := 0; i < lsdj_WORD_COUNT; i++ {
 		s.wordNames[i] = r.read(lsdj_WORD_NAME_LENGTH)
 	}
+
 	// jumping RB
 	r.seekCur(2)
 
-	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
-		if s.instruments[i] != nil {
-			s.instruments[i].name = r.read(lsdj_INSTRUMENT_NAME_LENGTH)
-		} else {
-			r.seekCur(lsdj_INSTRUMENT_NAME_LENGTH)
-		}
-	}
+	s.instruments.writeName(r)
 
 	s.reserved1fba = r.read(reserved_1fba)
 }
 func (song *song) writeBank0() {
 
 }
+
+/*
+	TODO: comandi per tabelle
+*/
 func (s *song) readBank1(r *vio) {
 	s.reserved2000 = r.read(reserved_2000)
 
-	// table and instr alloc tables already read at beginning
+	// table and instr alloc tables already getInstrument at beginning
 	r.seekCur(lsdj_TABLE_ALLOC_TABLE_SIZE + lsdj_INSTR_ALLOC_TABLE_SIZE)
 
-	for i := 0; i < lsdj_CHAIN_COUNT; i++ {
-		if s.chains[i] != nil {
-			s.chains[i].transpositions = r.read(lsdj_CHAIN_LENGTH)
-		} else {
-			r.seekCur(lsdj_CHAIN_LENGTH)
-		}
-	}
-	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
-		if s.instruments[i] != nil {
-			s.instruments[i].read(r, s.formatVersion)
-		} else {
-			r.seekCur(lsdj_INSTRUMENT_COUNT)
-		}
-	}
+	s.chains.write(r)
+	s.instruments.writeInstrument(r, s.formatVersion)
+
 	for i := 0; i < lsdj_TABLE_COUNT; i++ {
 		if s.tables[i] != nil {
 			// table get command1
@@ -304,13 +258,10 @@ func (s *song) readBank1(r *vio) {
 
 	// jumping RB
 	r.seekCur(2)
-	// Already read at the beginning
+	// Already getInstrument at the beginning
 	r.seekCur(lsdj_PHRASE_ALLOC_TABLE_SIZE + lsdj_CHAIN_ALLOC_TABLE_SIZE)
 
-	for i := 0; i < lsdj_SYNTH_COUNT; i++ {
-		s.synths[i] = new (synth)
-		s.synths[i].readSoftSynthParam(r)
-	}
+	s.synths.writeParams(r)
 
 	s.metadata.workTime.hours = r.readByte()
 	s.metadata.workTime.minutes = r.readByte()
@@ -319,72 +270,50 @@ func (s *song) readBank1(r *vio) {
 	s.metadata.totalTime.days = r.readByte()
 	s.metadata.totalTime.hours = r.readByte()
 	s.metadata.totalTime.minutes = r.readByte()
+
 	s.reserved3fb9 = r.readByte()
+
 	s.metadata.keyDelay = r.readByte()
 	s.metadata.keyRepeat = r.readByte()
 	s.metadata.font = r.readByte()
 	s.metadata.sync = r.readByte()
 	s.metadata.colorSet = r.readByte()
+
 	s.reserved3fbf = r.readByte()
+
 	s.metadata.clone = r.readByte()
 	s.metadata.fileChangedFlag = r.readByte()
 	s.metadata.powerSave = r.readByte()
 	s.metadata.preListen = r.readByte()
 
-	var waveSynthOverwriteLocks []byte // 2
-	waveSynthOverwriteLocks = r.read(2)
-	var i uint8
-	for i = 0; i < uint8(lsdj_SYNTH_COUNT); i++ {
-		s.synths[i].overwritten = (waveSynthOverwriteLocks[1-(i/8)] >> (i % 8)) & 1
-	}
+	s.synths.writeOverwritten(r)
+
 	s.reserved3fc6 = r.read(reserved_3fc6)
+
 	s.drumMax = r.readByte()
+
 	s.reserved3fd1 = r.read(reserved_3fd1)
 }
 func (song *song) writeBank1() {
 
 }
 func (s *song) readBank2(r *vio) {
-	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
-		if s.phrases[i] != nil {
-			for j := 0; j < lsdj_PHRASE_LENGTH; j++ {
-				s.phrases[i].commands[j] = new (command)
-				s.phrases[i].commands[j].command = r.readByte()
-			}
-		} else {
-			r.seekCur(lsdj_PHRASE_LENGTH)
-		}
-	}
-	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
-		if s.phrases[i] != nil {
-			for j := 0; j < lsdj_PHRASE_LENGTH; j++ {
-				s.phrases[i].commands[j].value = r.readByte()
-			}
-		} else {
-			r.seekCur(lsdj_PHRASE_LENGTH)
-		}
-	}
+	s.phrases.writeCommands(r)
+
 	s.reserved5fe0 = r.read(reserved_5fe0)
 }
 func (song *song) writeBank2() {
 
 }
 func (s *song) readBank3(r *vio) {
-	for i := 0; i < lsdj_WAVE_COUNT; i++ {
-		s.waves[i].data = r.read(lsdj_WAVE_LENGTH)
-	}
+	s.waves.write(r)
+	s.phrases.writeInstruments(r)
 
-	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
-		if s.phrases[i] != nil {
-			s.phrases[i].instruments = r.read(lsdj_PHRASE_LENGTH)
-		} else {
-			r.seekCur(lsdj_PHRASE_LENGTH)
-		}
-	}
 	// RB
 	r.seekCur(2)
 	s.reserved7ff2 = r.read(reserved_7ff2)
-	// Version number already read
+
+	// Version number already getInstrument
 	r.seekCur(1)
 }
 func (song *song) writeBank3() {
@@ -422,36 +351,10 @@ func (s *song) Read(r *vio) {
 	phraseAllocTable = r.read(lsdj_PHRASE_ALLOC_TABLE_SIZE)
 	chainAllocTable = r.read(lsdj_CHAIN_ALLOC_TABLE_SIZE)
 
-	for i := 0; i < lsdj_TABLE_ALLOC_TABLE_SIZE; i++ {
-		if tableAllocTable[i] != 0 {
-			s.tables[i] = new(table)
-		} else {
-			s.tables[i] = nil
-		}
-	}
-
-	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
-		if instrAllocTable[i] != 0 {
-			s.instruments[i] = new(instrumentContainer)
-		} else {
-			s.instruments[i] = nil
-		}
-	}
-	var i uint8
-	for i = 0; i < uint8(lsdj_CHAIN_COUNT); i++ {
-		if (chainAllocTable[i/8]>>(i%8))&1 == 1 {
-			s.chains[i] = new(chain)
-		} else {
-			s.chains[i] = nil
-		}
-	}
-	for i = 0; i < uint8(lsdj_PHRASE_COUNT); i++ {
-		if (phraseAllocTable[i/8]>>(i%8))&1 == 1 {
-			s.phrases[i] = new(phrase)
-		} else {
-			s.phrases[i] = nil
-		}
-	}
+	s.tables.initialize(tableAllocTable)
+	s.instruments.initialize(instrAllocTable)
+	s.chains.initialize(chainAllocTable)
+	s.phrases.initialize(phraseAllocTable)
 
 	r.seek(0)
 	s.readBank0(r)
@@ -502,9 +405,10 @@ func (song *song) GetRow(index int) *row {
 func (song *song) GetChain(index int) *chain {
 	return song.chains[index]
 }
-func (song *song) GetPhrase(index int) *phrase {
+
+/*func (song *song) GetPhrase(index int) *phrase {
 	return song.phrases[index]
-}
+}*/
 /*func (song *song) GetInstrument(index int) *instrument {
 	return song.instruments[index]
 }*/

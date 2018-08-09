@@ -20,6 +20,9 @@ const (
 )
 
 // Structure representing soft synth groove
+
+type synthA []*synth
+
 type synth struct {
 	waveform       byte
 	filter         byte
@@ -95,4 +98,26 @@ func (s *synth) readSoftSynthParam(r *vio) {
 	s.limitEnd = byte & 0xF
 
 	s.reserved = r.read(2)
+}
+
+func (s *synthA) initialize() {
+	*s = make([]*synth, lsdj_SYNTH_COUNT)
+	for i := 0; i < lsdj_SYNTH_COUNT; i++ {
+		(*s)[i] = new(synth)
+	}
+}
+
+func (s synthA) writeParams(r *vio) {
+	for i := 0; i < lsdj_SYNTH_COUNT; i++ {
+		s[i].readSoftSynthParam(r)
+	}
+}
+
+func (s synthA) writeOverwritten(r *vio) {
+	var i uint8
+
+	waveSynthOverwriteLocks := r.read(2)
+	for i = 0; i < uint8(lsdj_SYNTH_COUNT); i++ {
+		s[i].overwritten = (waveSynthOverwriteLocks[1-(i/8)] >> (i % 8)) & 1
+	}
 }

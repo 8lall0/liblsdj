@@ -33,31 +33,64 @@ type instrument interface {
 	clear()
 }
 
+type instrumentContainerA []*instrumentContainer
+
 type instrumentContainer struct {
 	name           []byte //lsdj_INSTRUMENT_NAME_LENGTH]
 	instrumentType int
 	instrument     instrument
 }
 
-func (ic *instrumentContainer) read(r *vio, version byte) {
+func (ic *instrumentContainer) getInstrument(r *vio, version byte) {
 	var iType byte
 
 	iType = r.readByte()
-	switch (int(iType)) {
+	switch int(iType) {
 	case 0:
 		ic.instrumentType = lsdj_INSTR_PULSE
-		ic.instrument = new (pulseT)
+		ic.instrument = new(pulseT)
 	case 1:
 		ic.instrumentType = lsdj_INSTR_WAVE
-		ic.instrument = new (waveT)
+		ic.instrument = new(waveT)
 	case 2:
 		ic.instrumentType = lsdj_INSTR_KIT
-		ic.instrument = new (kitT)
+		ic.instrument = new(kitT)
 	case 3:
 		ic.instrumentType = lsdj_INSTR_NOISE
-		ic.instrument = new (noiseT)
+		ic.instrument = new(noiseT)
 	}
 	ic.instrument.read(r, version)
+}
+
+func (iC *instrumentContainerA) initialize(allocTable []byte) {
+	*iC = make([]*instrumentContainer, lsdj_INSTRUMENT_COUNT)
+	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
+		if allocTable[i] != 0 {
+			(*iC)[i] = new(instrumentContainer)
+		} else {
+			(*iC)[i] = nil
+		}
+	}
+}
+
+func (iC instrumentContainerA) writeName(r *vio) {
+	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
+		if iC[i] != nil {
+			iC[i].name = r.read(lsdj_INSTRUMENT_NAME_LENGTH)
+		} else {
+			r.seekCur(lsdj_INSTRUMENT_NAME_LENGTH)
+		}
+	}
+}
+
+func (iC instrumentContainerA) writeInstrument(r *vio, version byte) {
+	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
+		if iC[i] != nil {
+			iC[i].getInstrument(r, version)
+		} else {
+			r.seekCur(lsdj_INSTRUMENT_COUNT)
+		}
+	}
 }
 
 func parseLength(b byte) byte {

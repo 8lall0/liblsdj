@@ -2,6 +2,8 @@ package liblsdj
 
 const lsdj_TABLE_LENGTH int = 16
 
+type tableA []*table
+
 type table struct {
 	// The volume column of the table
 	volumes []byte //lsdj_TABLE_LENGTH
@@ -59,4 +61,25 @@ func (t *table) GetCommand1(index int) *command {
 
 func (t *table) GetCommand2(index int) *command {
 	return t.commands2[index]
+}
+
+func (t *tableA) initialize(allocTable []byte) {
+	*t = make([]*table, lsdj_TABLE_COUNT)
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if allocTable[i] != 0 {
+			(*t)[i] = new(table)
+		} else {
+			(*t)[i] = nil
+		}
+	}
+}
+
+func (t tableA) write(r *vio) {
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			t[i].volumes = r.read(lsdj_TABLE_LENGTH)
+		} else {
+			r.seekCur(lsdj_TABLE_LENGTH)
+		}
+	}
 }
