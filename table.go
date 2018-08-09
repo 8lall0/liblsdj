@@ -83,3 +83,31 @@ func (t tableA) write(r *vio) {
 		}
 	}
 }
+
+func (t tableA) writeCommand1(r *vio) {
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			t[i].commands1 = make([]*command, lsdj_TABLE_LENGTH)
+			for j := 0; j < lsdj_TABLE_LENGTH; j++ {
+				t[i].commands1[j] = new(command)
+				t[i].commands1[j].command = r.readByte()
+			}
+		} else {
+			r.seekCur(lsdj_TABLE_LENGTH)
+		}
+	}
+}
+
+func (t tableA) writeCommand2(r *vio) {
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			t[i].commands2 = make([]*command, lsdj_TABLE_LENGTH)
+			for j := 0; j < lsdj_TABLE_LENGTH; j++ {
+				t[i].commands2[j] = new(command)
+				t[i].commands2[j].command = r.readByte()
+			}
+		} else {
+			r.seekCur(lsdj_TABLE_LENGTH)
+		}
+	}
+}
