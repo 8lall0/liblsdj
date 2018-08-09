@@ -2,6 +2,9 @@ package liblsdj
 
 const lsdj_PHRASE_LENGTH int = 16
 
+var lsdj_PHRASE_LENGTH_ZERO = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var lsdj_PHRASE_LENGTH_FF = []byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+
 type phraseA []*phrase
 
 type phrase struct {
@@ -40,7 +43,7 @@ func (p *phraseA) initialize(allocTable []byte) {
 	}
 }
 
-func (p phraseA) writeNotes(r *vio) {
+func (p phraseA) readNote(r *vio) {
 	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
 		if p[i] != nil {
 			p[i].notes = r.read(lsdj_PHRASE_LENGTH)
@@ -50,7 +53,17 @@ func (p phraseA) writeNotes(r *vio) {
 	}
 }
 
-func (p phraseA) writeCommands(r *vio) {
+func (p phraseA) writeNote(w *vio) {
+	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
+		if p[i] != nil {
+			w.write(p[i].notes)
+		} else {
+			w.write(lsdj_PHRASE_LENGTH_ZERO)
+		}
+	}
+}
+
+func (p phraseA) readCommand(r *vio) {
 	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
 		if p[i] != nil {
 			p[i].commands = make([]*command, lsdj_PHRASE_LENGTH)
@@ -73,7 +86,7 @@ func (p phraseA) writeCommands(r *vio) {
 	}
 }
 
-func (p phraseA) writeInstruments(r *vio) {
+func (p phraseA) readInstrument(r *vio) {
 	for i := 0; i < lsdj_PHRASE_COUNT; i++ {
 		if p[i] != nil {
 			p[i].instruments = r.read(lsdj_PHRASE_LENGTH)

@@ -26,8 +26,14 @@ func (g *grooveA) initialize() {
 	}
 }
 
-func (g grooveA) write(r *vio) {
+func (g grooveA) readGroove(r *vio) {
 	for i := 0; i < lsdj_GROOVE_COUNT; i++ {
 		g[i].groove = r.read(lsdj_GROOVE_LENGTH)
+	}
+}
+
+func (g grooveA) writeGroove(w *vio) {
+	for i := 0; i < lsdj_GROOVE_COUNT; i++ {
+		w.write(g[i].groove)
 	}
 }

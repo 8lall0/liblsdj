@@ -34,12 +34,36 @@ func (c *chainA) initialize(allocTable []byte) {
 	}
 }
 
-func (c chainA) write(r *vio) {
+func (c chainA) readChain(r *vio) {
+	for i := 0; i < lsdj_CHAIN_COUNT; i++ {
+		if c[i] != nil {
+			c[i].phrases = r.read(lsdj_CHAIN_LENGTH)
+		} else {
+			r.seekCur(lsdj_CHAIN_LENGTH)
+		}
+	}
 	for i := 0; i < lsdj_CHAIN_COUNT; i++ {
 		if c[i] != nil {
 			c[i].transpositions = r.read(lsdj_CHAIN_LENGTH)
 		} else {
 			r.seekCur(lsdj_CHAIN_LENGTH)
+		}
+	}
+}
+
+func (c chainA) writeChain(w *vio) {
+	for i := 0; i < lsdj_CHAIN_COUNT; i++ {
+		if c[i] != nil {
+			w.write(c[i].phrases)
+		} else {
+			w.write(lsdj_CHAIN_LENGTH_FF)
+		}
+	}
+	for i := 0; i < lsdj_CHAIN_COUNT; i++ {
+		if c[i] != nil {
+			w.write(c[i].transpositions)
+		} else {
+			w.write(lsdj_CHAIN_LENGTH_ZERO)
 		}
 	}
 }

@@ -23,7 +23,7 @@ func (w *waveA) initialize() {
 	}
 }
 
-func (w waveA) write(r *vio) {
+func (w waveA) readWave(r *vio) {
 	for i := 0; i < lsdj_WAVE_COUNT; i++ {
 		w[i].data = r.read(lsdj_WAVE_LENGTH)
 	}

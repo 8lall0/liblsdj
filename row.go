@@ -24,11 +24,20 @@ func (r *rowA) initialize() {
 	}
 }
 
-func (row rowA) write(r *vio) {
+func (row rowA) readRow(r *vio) {
 	for i := 0; i < lsdj_ROW_COUNT; i++ {
 		row[i].pulse1 = r.readByte()
 		row[i].pulse2 = r.readByte()
 		row[i].wave = r.readByte()
 		row[i].noise = r.readByte()
+	}
+}
+
+func (r rowA) writeRow(w *vio) {
+	for i := 0; i < lsdj_ROW_COUNT; i++ {
+		w.writeByte(r[i].pulse1)
+		w.writeByte(r[i].pulse2)
+		w.writeByte(r[i].wave)
+		w.writeByte(r[i].noise)
 	}
 }

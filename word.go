@@ -27,9 +27,16 @@ func (w *wordA) initialize() {
 	}
 }
 
-func (w wordA) write(r *vio) {
+func (w wordA) readWord(r *vio) {
 	for i := 0; i < lsdj_WORD_COUNT; i++ {
 		w[i].allophones = r.read(lsdj_WORD_LENGTH)
 		w[i].lengths = r.read(lsdj_WORD_LENGTH)
+	}
+}
+
+func (word wordA) writeWord(w *vio) {
+	for i := 0; i < lsdj_WORD_COUNT; i++ {
+		w.write(word[i].allophones)
+		w.write(word[i].lengths)
 	}
 }

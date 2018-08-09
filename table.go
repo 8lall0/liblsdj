@@ -2,6 +2,8 @@ package liblsdj
 
 const lsdj_TABLE_LENGTH int = 16
 
+var lsdj_TABLE_LENGTH_ZERO = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
 type tableA []*table
 
 type table struct {
@@ -74,7 +76,7 @@ func (t *tableA) initialize(allocTable []byte) {
 	}
 }
 
-func (t tableA) write(r *vio) {
+func (t tableA) readVolume(r *vio) {
 	for i := 0; i < lsdj_TABLE_COUNT; i++ {
 		if t[i] != nil {
 			t[i].volumes = r.read(lsdj_TABLE_LENGTH)
@@ -84,7 +86,7 @@ func (t tableA) write(r *vio) {
 	}
 }
 
-func (t tableA) writeCommand1(r *vio) {
+func (t tableA) readCommand1(r *vio) {
 	for i := 0; i < lsdj_TABLE_COUNT; i++ {
 		if t[i] != nil {
 			t[i].commands1 = make([]*command, lsdj_TABLE_LENGTH)
@@ -98,7 +100,7 @@ func (t tableA) writeCommand1(r *vio) {
 	}
 }
 
-func (t tableA) writeCommand2(r *vio) {
+func (t tableA) readCommand2(r *vio) {
 	for i := 0; i < lsdj_TABLE_COUNT; i++ {
 		if t[i] != nil {
 			t[i].commands2 = make([]*command, lsdj_TABLE_LENGTH)
@@ -110,4 +112,26 @@ func (t tableA) writeCommand2(r *vio) {
 			r.seekCur(lsdj_TABLE_LENGTH)
 		}
 	}
+}
+
+func (t tableA) writeVolume(w *vio) {
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			w.write(t[i].volumes)
+		} else {
+			w.write(lsdj_TABLE_LENGTH_ZERO)
+		}
+	}
+}
+
+func (t tableA) writeTabAllocTable(w *vio) {
+	table := make([]byte, lsdj_TABLE_ALLOC_TABLE_SIZE)
+	for i := 0; i < lsdj_TABLE_COUNT; i++ {
+		if t[i] != nil {
+			table[i] = 1
+		} else {
+			table[i] = 0
+		}
+	}
+	w.write(table)
 }

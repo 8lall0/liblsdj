@@ -100,6 +100,23 @@ func (s *synth) readSoftSynthParam(r *vio) {
 	s.reserved = r.read(2)
 }
 
+func (s *synth) writeSoftSynthParam(w *vio) {
+	w.writeByte(s.waveform)
+	w.writeByte(s.filter)
+	w.writeByte(((s.resonanceStart & 0x0F) << 4) | (s.resonanceEnd & 0x0F)) //resonance
+	w.writeByte(s.distortion)
+	w.writeByte(s.phase)
+	w.writeByte(s.volumeStart)
+	w.writeByte(s.cutOffStart)
+	w.writeByte(s.phaseStart)
+	w.writeByte(s.vshiftStart)
+	w.writeByte(s.volumeEnd)
+	w.writeByte(s.cutOffEnd)
+	w.writeByte(s.phaseEnd)
+	w.writeByte(s.vshiftEnd)
+	w.writeByte(0xFF - ((s.limitStart << 4) | s.limitEnd))
+	w.write(s.reserved)
+}
 func (s *synthA) initialize() {
 	*s = make([]*synth, lsdj_SYNTH_COUNT)
 	for i := 0; i < lsdj_SYNTH_COUNT; i++ {
@@ -107,13 +124,19 @@ func (s *synthA) initialize() {
 	}
 }
 
-func (s synthA) writeParams(r *vio) {
+func (s synthA) writeSynthParam(w *vio) {
+	for i := 0; i < lsdj_SYNTH_COUNT; i++ {
+		s[i].writeSoftSynthParam(w)
+	}
+}
+
+func (s synthA) readSynthParam(r *vio) {
 	for i := 0; i < lsdj_SYNTH_COUNT; i++ {
 		s[i].readSoftSynthParam(r)
 	}
 }
 
-func (s synthA) writeOverwritten(r *vio) {
+func (s synthA) readSynthOverwritten(r *vio) {
 	var i uint8
 
 	waveSynthOverwriteLocks := r.read(2)
