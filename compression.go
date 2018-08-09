@@ -83,6 +83,6 @@ func decompress(r *vio, w *vio) {
 }
 
 func compress() {
-	var defaultWaveLengthCount byte
+	var defaultWaveLengthCount int
 
 }

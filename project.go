@@ -1,7 +1,5 @@
 package liblsdj
 
-import "fmt"
-
 const (
 	lsdj_PROJECT_NAME_LENGTH int = 8
 )
@@ -33,7 +31,6 @@ func (p *Project) ReadLsdsng() {
 	decompress(r, w)
 	p.song.Read(w)
 	p.song.Write(o)
-	fmt.Println(o.data)
 }
 
 func (p *Project) WriteLsdsng() {

@@ -17,14 +17,14 @@ type Sav struct {
 	// The song in active working memory
 	song *song
 	//! Reserved empty memory
-	reserved8120 [30]byte
+	reserved8120 []byte
 }
 
 type Header struct {
 	project_names  []byte //LSDJ_SAV_PROJECT_COUNT * 8
 	versions       []byte //LSDJ_SAV_PROJECT_COUNT * 1
-	empty          [30]byte
-	init           [2]byte
+	empty          []byte
+	init           []byte
 	active_project byte
 }
 
@@ -58,15 +58,28 @@ func (s *Sav) SetProject(p *Project, index int) {
 	s.projects[index] = p
 }
 
-func (s *Sav) SavWrite(w *vio) {
+/*
+func (s *Sav) SavWrite(r *vio, w *vio) {
 	header := new(Header)
+
+	header.init = make([]byte, 2)
 
 	header.init[0] = []byte("j")[0]
 	header.init[1] = []byte("j")[1]
 	header.active_project = s.activeProject
 	header.empty = s.reserved8120
 
-	var blocks [BLOCK_COUNT][BLOCK_SIZE]byte
+	var blockAllocTable []byte
+	var block [BLOCK_COUNT][]byte
+	for i := range block {
+		block[i] = make([]byte, BLOCK_SIZE)
+	}
+
+	blockAllocTable = make([]byte, BLOCK_COUNT)
+	for i := 0; i < BLOCK_COUNT; i++ {
+		blockAllocTable[i] = 0xFF
+	}
+
 
 	for i := 0; i < LSDJ_SAV_PROJECT_COUNT; i++ {
 		name := make([]byte, 8)
@@ -77,11 +90,26 @@ func (s *Sav) SavWrite(w *vio) {
 
 		song := s.projects[i].song
 		if song != nil {
+			 //block[currentblock - 1]
+			 // TODO: compress wav
 
+			 if (written_block_count == 0) {
+			 	error
+			 }
+
+			 currentblock += written_block_count
 		}
 	}
-
-}
+	w.write(header.project_names)
+	w.write(header.versions)
+	w.write(header.empty)
+	w.write(header.init)
+	w.writeByte(header.active_project)
+	w.write(blockAllocTable)
+	for i:= range block {
+		w.write(block[i])
+	}
+}*/
 
 // Create a project that contains the working memory song
 //lsdj_project_t* lsdj_project_new_from_working_memory_song(const lsdj_sav_t* sav, lsdj_error_t** error);
