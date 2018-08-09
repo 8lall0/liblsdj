@@ -100,7 +100,46 @@ func (i *waveT) read(r *vio, ver byte) {
 }
 
 func (i *waveT) write(w *vio, ver byte) {
+	var b byte
+	w.writeByte(1)
+	w.writeByte(createWaveVolumeByte(i.volume))
+	w.writeByte(((i.wave.synth & 0xF) << 4) | (i.wave.repeat & 0xF))
+	w.writeByte(0)
+	w.writeByte(0xFF)
 
+	b = createDrumModeByte(i.wave.drumMode, ver)
+	b |= createTransposeByte(i.wave.transpose, ver)
+	b |= createAutomateByte(i.automate)
+	b |= createVibrationDirectionByte(i.wave.vibratoDirection)
+	if ver < 4 {
+		if i.wave.vibShape == lsdj_VIB_SAWTOOTH {
+			b |= 2
+		} else if i.wave.vibShape == lsdj_VIB_SQUARE {
+			b |= 6
+		} else if i.wave.vibShape == lsdj_VIB_TRIANGLE {
+			if i.wave.plvibSpeed != lsdj_PLVIB_FAST {
+				b |= 4
+			}
+		}
+	} else {
+		b |= (byte(i.wave.vibShape) & 3) << 1
+		if i.wave.plvibSpeed != lsdj_PLVIB_TICK {
+			b |= 0x10
+		} else if i.wave.plvibSpeed != lsdj_PLVIB_STEP {
+			b |= 0x80
+		}
+	}
+	w.writeByte(b)
+	w.writeByte(createTableByte(i.table))
+	w.writeByte(createPanningByte(i.panning))
+	w.writeByte(0)
+	w.writeByte(createPlaybackModeByte(i.wave.playback))
+	w.writeByte(0xD0)
+	w.writeByte(0)
+	w.writeByte(0)
+	w.writeByte(0)
+	w.writeByte(((i.wave.length & 0xF) << 4) | (i.wave.speed & 0xF))
+	w.writeByte(0)
 }
 
 func (i *waveT) clear() {

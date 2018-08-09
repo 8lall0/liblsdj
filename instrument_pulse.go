@@ -92,7 +92,45 @@ func (i *pulseT) read(r *vio, ver byte) {
 }
 
 func (i *pulseT) write(w *vio, ver byte) {
+	var b byte
 
+	w.writeByte(0)
+	w.writeByte(i.envelope)
+	w.writeByte(i.pulse.pulse2tune)
+	w.writeByte(createLengthByte(i.pulse.length))
+	w.writeByte(i.pulse.sweep)
+
+	b = createDrumModeByte(i.pulse.drumMode, ver)
+	b |= createTransposeByte(i.pulse.transpose, ver)
+	b |= createAutomateByte(i.automate)
+	b |= createVibrationDirectionByte(i.pulse.vibratoDirection)
+
+	if ver < 4 {
+		if i.pulse.vibShape == lsdj_VIB_SAWTOOTH {
+			b |= 2
+		} else if i.pulse.vibShape == lsdj_VIB_SQUARE {
+			b |= 6
+		} else if i.pulse.vibShape == lsdj_VIB_TRIANGLE {
+			if i.pulse.plvibSpeed != lsdj_PLVIB_FAST {
+				b |= 4
+			}
+		}
+	} else {
+		b |= (byte(i.pulse.vibShape) & 3) << 1
+		if i.pulse.plvibSpeed != lsdj_PLVIB_TICK {
+			b |= 0x10
+		} else if i.pulse.plvibSpeed != lsdj_PLVIB_STEP {
+			b |= 0x80
+		}
+	}
+	w.writeByte(b)
+	w.writeByte(createTableByte(i.table))
+	var b1, b2, b3 byte
+	b1 = createPulseWidthByte(i.pulse.pulseWidth)
+	b2 = (i.pulse.fineTune & 0xF) << 2
+	b3 = createPanningByte(i.panning)
+	w.writeByte(b1 | b2 | b3)
+	w.write([]byte{0, 0, 0xD0, 0, 0, 0, 0xF3, 0})
 }
 
 func (i *pulseT) clear() {

@@ -35,7 +35,15 @@ func (i *noiseT) read(r *vio, ver byte) {
 }
 
 func (i *noiseT) write(w *vio, ver byte) {
-
+	w.writeByte(3)
+	w.writeByte(i.envelope)
+	w.writeByte(createScommandByte(i.noise.sCommand))
+	w.writeByte(createLengthByte(i.noise.length))
+	w.writeByte(i.noise.shape)
+	w.writeByte(createAutomateByte(i.automate))
+	w.writeByte(createTableByte(i.table))
+	w.writeByte(createPanningByte(i.panning))
+	w.write([]byte{0, 0, 0xD0, 0, 0, 0, 0xF3, 0})
 }
 
 func (i *noiseT) clear() {

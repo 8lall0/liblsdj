@@ -134,10 +134,7 @@ func (i *kitT) write(w *vio, ver byte) {
 	var b1, b2, b3, b byte
 
 	w.writeByte(2)
-
-	/*
-		TODO: WaveVolumeByte
-	*/
+	w.writeByte(createWaveVolumeByte(i.volume))
 	if i.kit.loop1 == lsdj_KIT_LOOP_ATTACK {
 		b1 = 0x80
 	} else {
@@ -165,7 +162,7 @@ func (i *kitT) write(w *vio, ver byte) {
 	} else {
 		b2 = 0x0
 	}
-	//b3 = createAutomateByte
+	b3 = createAutomateByte(i.automate)
 	if ver < 4 {
 		b |= (byte(i.kit.plvibSpeed) & 3) << 1
 	} else {
@@ -175,14 +172,11 @@ func (i *kitT) write(w *vio, ver byte) {
 			b |= 0x80
 		}
 	}
-
 	w.writeByte(b)
-
-	/*
-		TODO: createTableByte
-		TODO: createPanningByte
-	*/
+	w.writeByte(createTableByte(i.table))
+	w.writeByte(createPanningByte(i.panning))
 	w.writeByte(i.kit.pitch)
+
 	if i.kit.loop2 == lsdj_KIT_LOOP_ATTACK {
 		b1 = 0x80
 	} else {
@@ -191,10 +185,7 @@ func (i *kitT) write(w *vio, ver byte) {
 	b2 = i.kit.kit2 & 0x3F
 	b = b1 | b2
 	w.writeByte(b)
-
-	/*
-		TODO: createKitDistortionByte
-	*/
+	w.writeByte(createKitDistortionByte(i.kit.distortion))
 	w.writeByte(i.kit.length2)
 	w.writeByte(i.kit.offset1)
 	w.writeByte(i.kit.offset2)
