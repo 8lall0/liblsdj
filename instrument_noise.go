@@ -34,6 +34,10 @@ func (i *noiseT) read(r *vio, ver byte) {
 	r.seek(r.getCur() + 8)
 }
 
+func (i *noiseT) write(w *vio, ver byte) {
+
+}
+
 func (i *noiseT) clear() {
 	i.insType = lsdj_INSTR_NOISE
 	i.envelope = 0xA8

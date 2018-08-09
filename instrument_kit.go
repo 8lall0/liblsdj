@@ -130,6 +130,79 @@ func (i *kitT) read(r *vio, ver byte) {
 	r.seek(r.getCur() + 2)
 }
 
+func (i *kitT) write(w *vio, ver byte) {
+	var b1, b2, b3, b byte
+
+	w.writeByte(2)
+
+	/*
+		TODO: WaveVolumeByte
+	*/
+	if i.kit.loop1 == lsdj_KIT_LOOP_ATTACK {
+		b1 = 0x80
+	} else {
+		b1 = 0x0
+	}
+	if i.kit.halfSpeed == 1 {
+		b2 = 0x40
+	} else {
+		b2 = 0x0
+	}
+	b3 = i.kit.kit1 & 0x3F
+	b = b1 | b2 | b3
+	w.writeByte(b)
+
+	w.writeByte(i.kit.length1)
+	w.writeByte(0xFF) //byte 4 empty
+
+	if i.kit.loop1 == lsdj_KIT_LOOP_ON {
+		b1 = 0x40
+	} else {
+		b1 = 0x0
+	}
+	if i.kit.loop2 == lsdj_KIT_LOOP_ON {
+		b2 = 0x20
+	} else {
+		b2 = 0x0
+	}
+	//b3 = createAutomateByte
+	if ver < 4 {
+		b |= (byte(i.kit.plvibSpeed) & 3) << 1
+	} else {
+		if i.kit.plvibSpeed == lsdj_PLVIB_TICK {
+			b |= 0x10
+		} else if i.kit.plvibSpeed == lsdj_PLVIB_STEP {
+			b |= 0x80
+		}
+	}
+
+	w.writeByte(b)
+
+	/*
+		TODO: createTableByte
+		TODO: createPanningByte
+	*/
+	w.writeByte(i.kit.pitch)
+	if i.kit.loop2 == lsdj_KIT_LOOP_ATTACK {
+		b1 = 0x80
+	} else {
+		b1 = 0x0
+	}
+	b2 = i.kit.kit2 & 0x3F
+	b = b1 | b2
+	w.writeByte(b)
+
+	/*
+		TODO: createKitDistortionByte
+	*/
+	w.writeByte(i.kit.length2)
+	w.writeByte(i.kit.offset1)
+	w.writeByte(i.kit.offset2)
+	w.writeByte(0xF3)
+	w.writeByte(0)
+
+}
+
 func (i *kitT) clear() {
 	i.insType = lsdj_INSTR_KIT
 	i.volume = 3

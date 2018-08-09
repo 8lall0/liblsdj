@@ -99,6 +99,10 @@ func (i *waveT) read(r *vio, ver byte) {
 	r.seek(r.getCur() + 1)
 }
 
+func (i *waveT) write(w *vio, ver byte) {
+
+}
+
 func (i *waveT) clear() {
 	i.insType = lsdj_INSTR_WAVE
 	i.volume = 3

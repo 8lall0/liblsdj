@@ -26,10 +26,12 @@ const (
 	lsdj_INSTR_NOISE
 )
 
-var lsdj_DEFAULT_INSTRUMENT = [lsdj_LSDJ_DEFAULT_INSTRUMENT_LENGTH]byte{0, 0xA8, 0, 0, 0xFF, 0, 0, 3, 0, 0, 0xD0, 0, 0, 0, 0xF3, 0}
+var lsdj_DEFAULT_INSTRUMENT = []byte{0, 0xA8, 0, 0, 0xFF, 0, 0, 3, 0, 0, 0xD0, 0, 0, 0, 0xF3, 0}
+var lsdj_EMPTY_INSTRUMENT_NAME = []byte{0, 0, 0, 0, 0}
 
 type instrument interface {
 	read(r *vio, ver byte)
+	write(w *vio, ver byte)
 	clear()
 }
 
@@ -41,25 +43,25 @@ type instrumentContainer struct {
 	instrument     instrument
 }
 
-func (ic *instrumentContainer) getInstrument(r *vio, version byte) {
+func (iC *instrumentContainer) setInstrument(r *vio, version byte) {
 	var iType byte
 
 	iType = r.readByte()
 	switch int(iType) {
 	case 0:
-		ic.instrumentType = lsdj_INSTR_PULSE
-		ic.instrument = new(pulseT)
+		iC.instrumentType = lsdj_INSTR_PULSE
+		iC.instrument = new(pulseT)
 	case 1:
-		ic.instrumentType = lsdj_INSTR_WAVE
-		ic.instrument = new(waveT)
+		iC.instrumentType = lsdj_INSTR_WAVE
+		iC.instrument = new(waveT)
 	case 2:
-		ic.instrumentType = lsdj_INSTR_KIT
-		ic.instrument = new(kitT)
+		iC.instrumentType = lsdj_INSTR_KIT
+		iC.instrument = new(kitT)
 	case 3:
-		ic.instrumentType = lsdj_INSTR_NOISE
-		ic.instrument = new(noiseT)
+		iC.instrumentType = lsdj_INSTR_NOISE
+		iC.instrument = new(noiseT)
 	}
-	ic.instrument.read(r, version)
+	iC.instrument.read(r, version)
 }
 
 func (iC *instrumentContainerA) initialize(allocTable []byte) {
@@ -73,7 +75,7 @@ func (iC *instrumentContainerA) initialize(allocTable []byte) {
 	}
 }
 
-func (iC instrumentContainerA) writeName(r *vio) {
+func (iC instrumentContainerA) readInsName(r *vio) {
 	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
 		if iC[i] != nil {
 			iC[i].name = r.read(lsdj_INSTRUMENT_NAME_LENGTH)
@@ -83,14 +85,47 @@ func (iC instrumentContainerA) writeName(r *vio) {
 	}
 }
 
-func (iC instrumentContainerA) writeInstrument(r *vio, version byte) {
+func (iC instrumentContainerA) readInstrument(r *vio, version byte) {
 	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
 		if iC[i] != nil {
-			iC[i].getInstrument(r, version)
+			iC[i].setInstrument(r, version)
 		} else {
 			r.seekCur(lsdj_INSTRUMENT_COUNT)
 		}
 	}
+}
+
+func (iC instrumentContainerA) writeInstrument(w *vio, version byte) {
+	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
+		if iC[i] != nil {
+			// We don't need setInstrument, we don't need switch case. It's an interface!
+			iC[i].instrument.write(w, version)
+		} else {
+			w.write(lsdj_DEFAULT_INSTRUMENT)
+		}
+	}
+}
+
+func (iC instrumentContainerA) writeInsName(w *vio) {
+	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
+		if iC[i] != nil {
+			w.write(iC[i].name)
+		} else {
+			w.write(lsdj_EMPTY_INSTRUMENT_NAME)
+		}
+	}
+}
+
+func (iC instrumentContainerA) writeInsAllocTable(w *vio) {
+	table := make([]byte, lsdj_INSTR_ALLOC_TABLE_SIZE)
+	for i := 0; i < lsdj_INSTRUMENT_COUNT; i++ {
+		if t[i] != nil {
+			table[i] = 1
+		} else {
+			table[i] = 0
+		}
+	}
+	w.write(table)
 }
 
 func parseLength(b byte) byte {

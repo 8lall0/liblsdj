@@ -91,6 +91,10 @@ func (i *pulseT) read(r *vio, ver byte) {
 	//assert(vio->tell(vio->user_data) - pos == 15);
 }
 
+func (i *pulseT) write(w *vio, ver byte) {
+
+}
+
 func (i *pulseT) clear() {
 	i.insType = lsdj_INSTR_PULSE
 	i.envelope = 0xA8
