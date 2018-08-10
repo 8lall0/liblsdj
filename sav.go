@@ -18,6 +18,8 @@ type Sav struct {
 	song *song
 	//! Reserved empty memory
 	reserved8120 []byte
+
+	header Header
 }
 
 type Header struct {
@@ -59,52 +61,46 @@ func (s *Sav) SetProject(p *Project, index int) {
 }
 
 func (s *Sav) SavWrite(r *vio, w *vio) {
-	var blockCur int
 	var blockAllocCur int
 	var blockAllocTable []byte
-	var blocks [BLOCK_COUNT]vio
-
-	header := new(Header)
-	header.init = make([]byte, 2)
-	header.init[0] = []byte("j")[0]
-	header.init[1] = []byte("j")[1]
-	header.active_project = s.activeProject
-	header.empty = s.reserved8120
+	var blocks blockA
 
 	blockAllocTable = make([]byte, BLOCK_COUNT)
 	for i := 0; i < BLOCK_COUNT; i++ {
 		blockAllocTable[i] = 0xFF
 	}
 
-	for i := 0; i < LSDJ_SAV_PROJECT_COUNT; i++ {
+	s.activeProject = 0xFF
+	s.header.init = []byte("jk")
+	s.header.active_project = s.activeProject
+	s.header.empty = s.reserved8120
+
+	for true {
+		i := 0
 		// Lunghezza fissa di almeno 8
-		name := make([]byte, 8)
-		copy(name, s.projects[i].name)
-		header.project_names = append(header.project_names, name...)
-
-		header.versions[i] = s.projects[i].version
-
-		if s.projects[i].song != nil {
-			// TODO: compress wav
-			writtenBlocks := compress(r, &blocks)
-			if writtenBlocks == 0 {
-				// TODO: error handling
-				panic("Non abbastanza spazio")
-			}
-			blockCur += writtenBlocks
-			for j := 0; j < writtenBlocks; j++ {
-				blockAllocTable[blockAllocCur] = byte(i)
-				blockAllocCur++
-			}
+		for j := 0; j < len(s.projects[i].name); j++ {
+			s.header.project_names = append(s.header.project_names, s.projects[i].name[j])
 		}
+		for j := len(s.projects[i].name); j < 8; j++ {
+			s.header.versions = append(s.header.versions, 0)
+		}
+
+		// TODO: error handling
+		writtenBlocks := compress(r, &blocks)
+		if writtenBlocks == 0 {
+			panic("Non abbastanza spazio")
+		}
+		for j := 0; j < writtenBlocks; j++ {
+			blockAllocTable[blockAllocCur] = byte(i)
+			blockAllocCur++
+		}
+		break
 	}
-	w.write(header.project_names)
-	w.write(header.versions)
-	w.write(header.empty)
-	w.write(header.init)
-	w.writeByte(header.active_project)
+	w.write(s.header.project_names)
+	w.write(s.header.versions)
+	w.write(s.header.empty)
+	w.write(s.header.init)
+	w.writeByte(s.header.active_project)
 	w.write(blockAllocTable)
-	for i := range blocks {
-		w.write(blocks[i].get())
-	}
+	w.write(blocks.readAll())
 }

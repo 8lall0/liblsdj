@@ -216,6 +216,7 @@ func (s *song) writeBank0(w *vio) {
 
 	s.grooves.writeGroove(w)
 	s.rows.writeRow(w)
+	s.tables.writeVolume(w)
 	s.words.writeWord(w)
 	for i := range s.wordNames {
 		w.write(s.wordNames[i])

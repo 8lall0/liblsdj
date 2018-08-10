@@ -1,5 +1,7 @@
 package liblsdj
 
+import "fmt"
+
 const (
 	lsdj_PROJECT_NAME_LENGTH int = 8
 )
@@ -16,21 +18,30 @@ type Project struct {
 }
 
 func (p *Project) ReadLsdsng() {
-	r := new(vio)
-	w := new(vio)
-	o := new(vio)
+	readData := new(vio)
+	decomprSong := new(vio)
+	decomprSongDecoded := new(vio)
+	/*savFile := new(vio)
+
+	s := new (Sav)*/
 	/*
 		TODO: improve API. Maybe make a reader and a stupid writer?
 	*/
 
-	r.open("3billetes.lsdsng")
-	p.name = r.read(lsdj_PROJECT_NAME_LENGTH)
-	p.version = r.readByte()
+	readData.open("3billetes.lsdsng")
+	p.name = readData.read(lsdj_PROJECT_NAME_LENGTH)
+	p.version = readData.readByte()
 	p.song = new(song)
 	// decompress the songg
-	decompress(r, w)
-	p.song.Read(w)
-	p.song.Write(o)
+	decompress(readData, decomprSong)
+
+	p.song.Read(decomprSong)
+	return
+	p.song.Write(decomprSongDecoded)
+	fmt.Println(decomprSongDecoded.getLen())
+	/*s.SetProject(p, 0)
+	s.SavWrite(decomprSong, savFile)
+	ioutil.WriteFile("gino.sav", savFile.get(), 0755)*/
 }
 
 func (p *Project) WriteLsdsng() {

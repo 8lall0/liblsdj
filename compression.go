@@ -2,7 +2,6 @@ package liblsdj
 
 import (
 	"fmt"
-	"github.com/tango-contrib/cache"
 )
 
 const (
@@ -83,15 +82,18 @@ func decompress(r *vio, w *vio) {
 	fmt.Println("Size: ", len(w.get()))
 }
 
-func compress(r *vio, w *vio) int {
+func compress(r *vio, w *blockA) int {
 	var end = r.getCur() + lsdj_SONG_DECOMPRESSED_SIZE
 	var defWaveCnt, defInsCnt byte
 
-	nextEvent := []byte{0, 0, 0}
-	eventSize := 0
+	var nextEvent []byte
+	var eventSize int
 
 	// So già quante cazzo di volte devo ciclare
-	for i := 0; i < lsdj_SONG_DECOMPRESSED_SIZE; i++ {
+	for i := 0; r.getCur() < r.getLen(); i++ {
+		nextEvent = []byte{0, 0, 0}
+		eventSize = 0
+
 		// Controllo per la wave
 		for isDefault := true; isDefault && defWaveCnt != 0xFF; {
 			tmp := r.read(lsdj_WAVE_LENGTH)
@@ -130,6 +132,7 @@ func compress(r *vio, w *vio) int {
 				nextEvent[2] = defInsCnt
 				eventSize = 3
 			} else {
+				//fmt.Println(r.getCur(), r.getLen(), i)
 				b := r.readByte()
 				if b == RUN_LENGTH_ENCODING_BYTE {
 					nextEvent[0] = RUN_LENGTH_ENCODING_BYTE
@@ -165,16 +168,11 @@ func compress(r *vio, w *vio) int {
 			}
 		}
 
-		// Controlla se il blocco è esaurito
-		// TODO: vio per gestire blocchi??
-		if (w.getLen() + eventSize) >= BLOCK_SIZE {
-			w.writeByte(SPECIAL_ACTION_BYTE)
-			w.writeByte(SPECIAL_ACTION_BYTE)
+		for i := 0; i < eventSize; i++ {
+			w.writeByte(nextEvent[i])
 		}
-
-		w.writeByte(SPECIAL_ACTION_BYTE)
-		w.writeByte(END_OF_FILE_BYTE)
-		// Write all zeroes
 	}
-
+	w.writeByte(SPECIAL_ACTION_BYTE)
+	w.writeByte(END_OF_FILE_BYTE)
+	return w.written + 1
 }
