@@ -64,3 +64,7 @@ func (v *vio) get() []byte {
 func (v *vio) getCur() int {
 	return v.cur
 }
+
+func (v *vio) getLen() int {
+	return len(v.data)
+}

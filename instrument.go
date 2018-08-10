@@ -5,11 +5,11 @@ type lsdj_vib_shape byte
 type lsdj_vib_direction byte
 
 const (
-	lsdj_INSTRUMENT_NAME_LENGTH         int  = 5
-	lsdj_LSDJ_DEFAULT_INSTRUMENT_LENGTH int  = 16
-	lsdj_NO_TABLE                       byte = 0x20
-	lsdj_INSTRUMENT_UNLIMITED_LENGTH    byte = 0x40
-	lsdj_KIT_LENGTH_AUTO                byte = 0x0
+	lsdj_INSTRUMENT_NAME_LENGTH      int  = 5
+	lsdj_DEFAULT_INSTRUMENT_LENGTH   int  = 16
+	lsdj_NO_TABLE                    byte = 0x20
+	lsdj_INSTRUMENT_UNLIMITED_LENGTH byte = 0x40
+	lsdj_KIT_LENGTH_AUTO             byte = 0x0
 
 	lsdj_PLVIB_FAST   lsdj_plvib_speed   = 0
 	lsdj_PLVIB_TICK   lsdj_plvib_speed   = 1
