@@ -1,30 +1,30 @@
-package liblsdj
+package lsdj
 
-const (
-	lsdj_COMMAND_NONE          byte = 0x00
-	lsdj_COMMAND_A             byte = 0x01
-	lsdj_COMMAND_C             byte = 0x02
-	lsdj_COMMAND_D             byte = 0x03
-	lsdj_COMMAND_E             byte = 0x04
-	lsdj_COMMAND_F             byte = 0x05
-	lsdj_COMMAND_G             byte = 0x06
-	lsdj_COMMAND_H             byte = 0x07
-	lsdj_COMMAND_K             byte = 0x08
-	lsdj_COMMAND_L             byte = 0x09
-	lsdj_COMMAND_M             byte = 0x0a
-	lsdj_COMMAND_O             byte = 0x0b
-	lsdj_COMMAND_P             byte = 0x0c
-	lsdj_COMMAND_R             byte = 0x0d
-	lsdj_COMMAND_S             byte = 0x0e
-	lsdj_COMMAND_T             byte = 0x0f
-	lsdj_COMMAND_V             byte = 0x10
-	lsdj_COMMAND_W             byte = 0x11
-	lsdj_COMMAND_Z             byte = 0x12
-	lsdj_COMMAND_ARDUINO_BOY_N byte = 0x13
-	lsdj_COMMAND_ARDUINO_BOY_X byte = 0x14
-	lsdj_COMMAND_ARDUINO_BOY_Q byte = 0x15
-	lsdj_COMMAND_ARDUINO_BOY_Y byte = 0x16
-)
+import "io"
+
+const commandNone = 0x00
+const commandA = 0x01
+const commandC = 0x02
+const commandD = 0x03
+const commandE = 0x04
+const commandF = 0x05
+const commandG = 0x06
+const commandH = 0x07
+const commandK = 0x08
+const commandL = 0x09
+const commandM = 0x0a
+const commandO = 0x0b
+const commandP = 0x0c
+const commandR = 0x0d
+const commandS = 0x0e
+const commandT = 0x0f
+const commandV = 0x10
+const commandW = 0x11
+const commandZ = 0x12
+const commandArduinoboyN = 0x13
+const commandArduinoboyX = 0x14
+const commandArduinoboyQ = 0x15
+const commandArduinoboyY = 0x16
 
 type command struct {
 	command byte
@@ -36,6 +36,8 @@ func (c *command) clear() {
 	c.value = 0
 }
 
-func (c *command) copy() *command {
-	return &(*c)
+func (c *command) write(r io.ReadSeeker) {
+	// TODO errori
+	c.command, _ = readByte(r)
+	c.value, _ = readByte(r)
 }

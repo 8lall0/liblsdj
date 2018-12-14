@@ -1,153 +1,46 @@
-package liblsdj
+package lsdj
 
-type lsdj_pulse_wave byte
+import "io"
+
+type pulseWave byte
 
 const (
-	lsdj_PULSE_WAVE_PW_125 lsdj_pulse_wave = 0
-	lsdj_PULSE_WAVE_PW_25  lsdj_pulse_wave = 1
-	lsdj_PULSE_WAVE_PW_50  lsdj_pulse_wave = 2
-	lsdj_PULSE_WAVE_PW_75  lsdj_pulse_wave = 3
+	pulseWave125 pulseWave = iota
+	pulseWave25
+	pulseWave50
+	pulseWave75
 )
 
-type pulseT struct {
-	insType  int
-	panning  panning
-	envelope byte // envelope or byte
-	table    byte // 0x20 or higher = lsdj_NO_TABLE
-	automate byte
-	pulse    struct {
-		pulseWidth       lsdj_pulse_wave
-		length           byte // 0x40 and above = unlimited
-		sweep            byte
-		plvibSpeed       lsdj_plvib_speed
-		vibShape         lsdj_vib_shape
-		vibratoDirection lsdj_vib_direction
-		transpose        byte
-		drumMode         byte
-		pulse2tune       byte
-		fineTune         byte
-	}
+type instrumentPulse struct {
+	pulseWidth pulseWave
+	length     byte // 0x40 and above = unlimited
+	sweep      byte
+
+	plVibSpeed   plVibSpeed
+	vibShape     vibShape
+	vibDirection vibDirection
+
+	transpose  byte
+	drumMode   byte
+	pulse2tune byte
+	fineTune   byte
 }
 
-func (i *pulseT) read(r *vio, ver byte) {
-	var b byte
+func (i *instrumentPulse) clearInstrument() {
+	i.pulseWidth = pulseWave125
+	i.length = instrumentUnlimitedLength
+	i.sweep = 0xFF
 
-	i.insType = lsdj_INSTR_PULSE
-	i.envelope = r.readByte()
-	i.pulse.pulse2tune = r.readByte()
-	i.pulse.length = parseLength(r.readByte())
-	i.pulse.sweep = r.readByte()
+	i.plVibSpeed = plVibFast
+	i.vibShape = vibTriangle
+	i.vibDirection = vipUp
 
-	b = r.readByte()
-	i.pulse.drumMode = parseDrumMode(b, ver)
-	i.pulse.transpose = parseTranspose(b, ver)
-	i.automate = parseAutomate(b)
-	i.pulse.vibratoDirection = lsdj_vib_direction(b & 1)
-
-	if int(ver) < 4 {
-		switch int(b>>1) & 3 {
-		case 0:
-			i.pulse.plvibSpeed = lsdj_PLVIB_FAST
-			i.pulse.vibShape = lsdj_VIB_TRIANGLE
-		case 1:
-			i.pulse.plvibSpeed = lsdj_PLVIB_TICK
-			i.pulse.vibShape = lsdj_VIB_SAWTOOTH
-		case 2:
-			i.pulse.plvibSpeed = lsdj_PLVIB_TICK
-			i.pulse.vibShape = lsdj_VIB_TRIANGLE
-		case 3:
-			i.pulse.plvibSpeed = lsdj_PLVIB_FAST
-			i.pulse.vibShape = lsdj_VIB_SQUARE
-		}
-	} else {
-		if b&0x80 == 1 {
-			i.pulse.plvibSpeed = lsdj_PLVIB_STEP
-		} else if b&0x10 == 1 {
-			i.pulse.plvibSpeed = lsdj_PLVIB_TICK
-		} else {
-			i.pulse.plvibSpeed = lsdj_PLVIB_FAST
-		}
-
-		switch int((b >> 1) & 3) {
-		case 0:
-			i.pulse.vibShape = lsdj_VIB_TRIANGLE
-		case 1:
-			i.pulse.vibShape = lsdj_VIB_SAWTOOTH
-		case 2:
-			i.pulse.vibShape = lsdj_VIB_SQUARE
-		}
-	}
-
-	b = r.readByte()
-	i.table = parseTable(b)
-	b = r.readByte()
-	i.pulse.pulseWidth = parsePulseWidth(b)
-	i.pulse.fineTune = (b >> 2) & 0xF
-
-	// Bytes 8-15 are empty
-	r.seek(r.getCur() + 8)
-
-	// TODO: capire come usare sto assert
-	//assert(vio->tell(vio->user_data) - pos == 15);
+	i.transpose = 1
+	i.drumMode = 0
+	i.pulse2tune = 0
+	i.fineTune = 0
 }
 
-func (i *pulseT) write(w *vio, ver byte) {
-	var b byte
-
-	w.writeByte(0)
-	w.writeByte(i.envelope)
-	w.writeByte(i.pulse.pulse2tune)
-	w.writeByte(createLengthByte(i.pulse.length))
-	w.writeByte(i.pulse.sweep)
-
-	b = createDrumModeByte(i.pulse.drumMode, ver)
-	b |= createTransposeByte(i.pulse.transpose, ver)
-	b |= createAutomateByte(i.automate)
-	b |= createVibrationDirectionByte(i.pulse.vibratoDirection)
-
-	if ver < 4 {
-		if i.pulse.vibShape == lsdj_VIB_SAWTOOTH {
-			b |= 2
-		} else if i.pulse.vibShape == lsdj_VIB_SQUARE {
-			b |= 6
-		} else if i.pulse.vibShape == lsdj_VIB_TRIANGLE {
-			if i.pulse.plvibSpeed != lsdj_PLVIB_FAST {
-				b |= 4
-			}
-		}
-	} else {
-		b |= (byte(i.pulse.vibShape) & 3) << 1
-		if i.pulse.plvibSpeed != lsdj_PLVIB_TICK {
-			b |= 0x10
-		} else if i.pulse.plvibSpeed != lsdj_PLVIB_STEP {
-			b |= 0x80
-		}
-	}
-	w.writeByte(b)
-	w.writeByte(createTableByte(i.table))
-	var b1, b2, b3 byte
-	b1 = createPulseWidthByte(i.pulse.pulseWidth)
-	b2 = (i.pulse.fineTune & 0xF) << 2
-	b3 = createPanningByte(i.panning)
-	w.writeByte(b1 | b2 | b3)
-	w.write([]byte{0, 0, 0xD0, 0, 0, 0, 0xF3, 0})
-}
-
-func (i *pulseT) clear() {
-	i.insType = lsdj_INSTR_PULSE
-	i.envelope = 0xA8
-	i.panning = lsdj_PAN_LEFT_RIGHT
-	i.table = lsdj_NO_TABLE
-	i.automate = 0
-
-	i.pulse.pulseWidth = lsdj_PULSE_WAVE_PW_125
-	i.pulse.length = lsdj_INSTRUMENT_UNLIMITED_LENGTH
-	i.pulse.sweep = 0xFF
-	i.pulse.plvibSpeed = lsdj_PLVIB_FAST
-	i.pulse.vibShape = lsdj_VIB_TRIANGLE
-	i.pulse.vibratoDirection = lsdj_VIB_UP
-	i.pulse.transpose = 1
-	i.pulse.drumMode = 0
-	i.pulse.pulse2tune = 0
-	i.pulse.fineTune = 0
+func (i *instrumentPulse) read(r io.ReadSeeker) {
+	//TODO: read_pulse_instrument
 }

@@ -1,219 +1,63 @@
-package liblsdj
+package lsdj
 
-type lsdj_kit_loop_mode byte
-type lsdj_kit_distortion byte
-type lsdj_kit_pspeed byte
+import "io"
+
+type kitLoopMode byte
+type kitDistortion byte
+type kitPspeed byte
 
 const (
-	lsdj_KIT_LOOP_OFF    lsdj_kit_loop_mode = 0
-	lsdj_KIT_LOOP_ON     lsdj_kit_loop_mode = 1
-	lsdj_KIT_LOOP_ATTACK lsdj_kit_loop_mode = 2
+	kitDistClip   kitDistortion = 0xD0
+	kitDistShape  kitDistortion = 0xD1
+	kitDistShape2 kitDistortion = 0xD2
+	kitDistWrap   kitDistortion = 0xD3
 
-	lsdj_KIT_DIST_CLIP   lsdj_kit_distortion = 0xD0
-	lsdj_KIT_DIST_SHAPE  lsdj_kit_distortion = 0xD1
-	lsdj_KIT_DIST_SHAPE2 lsdj_kit_distortion = 0xD2
-	lsdj_KIT_DIST_WRAP   lsdj_kit_distortion = 0xD3
+	kitLoopOff kitLoopMode = iota
+	kitLoopOn
+	kitLoopAttack
 
-	lsdj_KIT_PSPEED_FAST lsdj_kit_pspeed = 0
-	lsdj_KIT_PSPEED_SLOW lsdj_kit_pspeed = 1
-	lsdj_KIT_PSPEED_STEP lsdj_kit_pspeed = 2
+	kitPspeedFast kitPspeed = iota
+	kitPspeedSlow
+	kitPspeedStep
 )
 
-type kitT struct {
-	insType  int
-	panning  panning
-	volume   byte
-	table    byte // 0x20 or higher = lsdj_NO_TABLE
-	automate byte
-	kit      struct {
-		kit1    byte
-		offset1 byte
-		length1 byte
-		loop1   lsdj_kit_loop_mode
+type instrumentKit struct {
+	kit1    byte
+	offset1 byte
+	length1 byte
+	loop1   kitLoopMode
 
-		kit2    byte
-		offset2 byte
-		length2 byte
-		loop2   lsdj_kit_loop_mode
+	kit2    byte
+	offset2 byte
+	length2 byte
+	loop2   kitLoopMode
 
-		pitch            byte
-		halfSpeed        byte
-		distortion       lsdj_kit_distortion
-		plvibSpeed       lsdj_plvib_speed
-		vibShape         lsdj_vib_shape
-		vibratoDirection lsdj_vib_direction
-	}
+	pitch        byte
+	halfSpeed    byte
+	distortion   kitDistortion
+	plVibSpeed   plVibSpeed
+	vibShape     vibShape
+	vibDirection vibDirection
 }
 
-func (i *kitT) read(r *vio, ver byte) {
-	var b byte
+func (i *instrumentKit) clearInstrument() {
+	i.kit1 = 0
+	i.offset1 = 0
+	i.length1 = kitLengthAuto
+	i.loop1 = kitLoopOff
 
-	i.insType = lsdj_INSTR_KIT
-	i.volume = r.readByte()
+	i.kit2 = 0
+	i.offset2 = 0
+	i.length2 = kitLengthAuto
+	i.loop2 = kitLoopOff
 
-	i.kit.loop1 = lsdj_KIT_LOOP_OFF
-	i.kit.loop2 = lsdj_KIT_LOOP_OFF
-
-	b = r.readByte()
-	if (b>>7)&1 == 1 {
-		i.kit.loop1 = lsdj_KIT_LOOP_ATTACK
-	}
-	i.kit.halfSpeed = (b >> 6) & 1
-	i.kit.kit1 = b & 0x3F
-	i.kit.length1 = r.readByte()
-
-	// Byte 4 is empty
-	r.seek(r.getCur() + 1)
-
-	b = r.readByte()
-	if i.kit.loop1 != lsdj_KIT_LOOP_ATTACK {
-		if (b & 0x40) == 1 {
-			i.kit.loop1 = lsdj_KIT_LOOP_ON
-		} else {
-			i.kit.loop1 = lsdj_KIT_LOOP_OFF
-		}
-	}
-	if (b & 0x40) == 1 {
-		i.kit.loop2 = lsdj_KIT_LOOP_ON
-	} else {
-		i.kit.loop2 = lsdj_KIT_LOOP_OFF
-	}
-	i.automate = parseAutomate(b)
-	i.kit.vibratoDirection = lsdj_vib_direction(b & 1)
-
-	if int(ver) < 4 {
-		switch int(b>>1) & 3 {
-		case 0:
-			i.kit.plvibSpeed = lsdj_PLVIB_FAST
-			i.kit.vibShape = lsdj_VIB_TRIANGLE
-		case 1:
-			i.kit.plvibSpeed = lsdj_PLVIB_TICK
-			i.kit.vibShape = lsdj_VIB_TRIANGLE
-		case 2:
-			i.kit.plvibSpeed = lsdj_PLVIB_STEP
-			i.kit.vibShape = lsdj_VIB_TRIANGLE
-		}
-	} else {
-		if b&0x80 == 1 {
-			i.kit.plvibSpeed = lsdj_PLVIB_STEP
-		} else if b&0x10 == 1 {
-			i.kit.plvibSpeed = lsdj_PLVIB_TICK
-		} else {
-			i.kit.plvibSpeed = lsdj_PLVIB_FAST
-		}
-
-		switch int((b >> 1) & 3) {
-		case 0:
-			i.kit.vibShape = lsdj_VIB_TRIANGLE
-		case 1:
-			i.kit.vibShape = lsdj_VIB_SAWTOOTH
-		case 2:
-			i.kit.vibShape = lsdj_VIB_SQUARE
-		}
-	}
-
-	i.table = parseTable(r.readByte())
-	i.panning = parsePanning(r.readByte())
-	i.kit.pitch = r.readByte()
-
-	b = r.readByte()
-	if (b>>7)&1 == 1 {
-		i.kit.loop2 = lsdj_KIT_LOOP_ATTACK
-	}
-	i.kit.kit2 = b & 0x3F
-
-	i.kit.distortion = parseKitDistortion(r.readByte())
-	i.kit.length2 = r.readByte()
-	i.kit.offset1 = r.readByte()
-	i.kit.offset2 = r.readByte()
-
-	r.seek(r.getCur() + 2)
+	i.pitch = 0
+	i.halfSpeed = 0
+	i.distortion = kitDistClip
+	i.plVibSpeed = plVibFast
+	i.vibShape = vibTriangle
 }
 
-func (i *kitT) write(w *vio, ver byte) {
-	var b1, b2, b3, b byte
-
-	w.writeByte(2)
-	w.writeByte(createWaveVolumeByte(i.volume))
-	if i.kit.loop1 == lsdj_KIT_LOOP_ATTACK {
-		b1 = 0x80
-	} else {
-		b1 = 0x0
-	}
-	if i.kit.halfSpeed == 1 {
-		b2 = 0x40
-	} else {
-		b2 = 0x0
-	}
-	b3 = i.kit.kit1 & 0x3F
-	b = b1 | b2 | b3
-	w.writeByte(b)
-
-	w.writeByte(i.kit.length1)
-	w.writeByte(0xFF) //byte 4 empty
-
-	if i.kit.loop1 == lsdj_KIT_LOOP_ON {
-		b1 = 0x40
-	} else {
-		b1 = 0x0
-	}
-	if i.kit.loop2 == lsdj_KIT_LOOP_ON {
-		b2 = 0x20
-	} else {
-		b2 = 0x0
-	}
-	b3 = createAutomateByte(i.automate)
-	if ver < 4 {
-		b |= (byte(i.kit.plvibSpeed) & 3) << 1
-	} else {
-		if i.kit.plvibSpeed == lsdj_PLVIB_TICK {
-			b |= 0x10
-		} else if i.kit.plvibSpeed == lsdj_PLVIB_STEP {
-			b |= 0x80
-		}
-	}
-	w.writeByte(b)
-	w.writeByte(createTableByte(i.table))
-	w.writeByte(createPanningByte(i.panning))
-	w.writeByte(i.kit.pitch)
-
-	if i.kit.loop2 == lsdj_KIT_LOOP_ATTACK {
-		b1 = 0x80
-	} else {
-		b1 = 0x0
-	}
-	b2 = i.kit.kit2 & 0x3F
-	b = b1 | b2
-	w.writeByte(b)
-	w.writeByte(createKitDistortionByte(i.kit.distortion))
-	w.writeByte(i.kit.length2)
-	w.writeByte(i.kit.offset1)
-	w.writeByte(i.kit.offset2)
-	w.writeByte(0xF3)
-	w.writeByte(0)
-
-}
-
-func (i *kitT) clear() {
-	i.insType = lsdj_INSTR_KIT
-	i.volume = 3
-	i.panning = lsdj_PAN_LEFT_RIGHT
-	i.table = lsdj_NO_TABLE
-	i.automate = 0
-
-	i.kit.kit1 = 0
-	i.kit.offset1 = 0
-	i.kit.length1 = lsdj_KIT_LENGTH_AUTO
-	i.kit.loop1 = lsdj_KIT_LOOP_OFF
-
-	i.kit.kit2 = 0
-	i.kit.offset2 = 0
-	i.kit.length2 = lsdj_KIT_LENGTH_AUTO
-	i.kit.loop1 = lsdj_KIT_LOOP_OFF
-
-	i.kit.pitch = 0
-	i.kit.halfSpeed = 0
-	i.kit.distortion = lsdj_KIT_DIST_CLIP
-	i.kit.plvibSpeed = lsdj_PLVIB_FAST
-	i.kit.vibShape = lsdj_VIB_TRIANGLE
+func (i *instrumentKit) read(r io.ReadSeeker) {
+	//TODO: read_kit_instrument
 }
