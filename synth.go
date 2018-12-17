@@ -97,3 +97,21 @@ func (s *synth) readSoftSynthParams(r io.ReadSeeker) {
 	s.reserved[0], _ = readByte(r)
 	s.reserved[1], _ = readByte(r)
 }
+
+func (s *synth) writeSoftSynthParams(w io.WriteSeeker) {
+	_ = writeByte(s.waveform, w)
+	_ = writeByte(s.distortion, w)
+	_ = writeByte(s.phase, w)
+	_ = writeByte(s.volumeStart, w)
+	_ = writeByte(s.cutOffStart, w)
+	_ = writeByte(s.vshiftStart, w)
+	_ = writeByte(s.volumeEnd, w)
+	_ = writeByte(s.cutOffEnd, w)
+	_ = writeByte(s.phaseEnd, w)
+	_ = writeByte(s.vshiftEnd, w)
+
+	b := 0xFF - (s.limitStart << 4) | s.limitEnd
+	_ = writeByte(b, w)
+
+	_, _ = w.Write(s.reserved[:])
+}

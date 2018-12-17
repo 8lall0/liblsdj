@@ -20,6 +20,20 @@ func (t *table) clear() {
 	}
 }
 
+func (t *table) getCommand1() (out []byte) {
+	for i := 0; i < tableLen; i++ {
+		out = append(out, t.commands1[i].get()...)
+	}
+	return out
+}
+
+func (t *table) getCommand2() (out []byte) {
+	for i := 0; i < tableLen; i++ {
+		out = append(out, t.commands2[i].get()...)
+	}
+	return out
+}
+
 func (t *table) writeVolume(r io.ReadSeeker) {
 	if _, err := io.ReadFull(r, t.volumes[:]); err != nil {
 		panic(err)

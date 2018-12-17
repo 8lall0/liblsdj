@@ -41,3 +41,11 @@ func (c *command) write(r io.ReadSeeker) {
 	c.command, _ = readByte(r)
 	c.value, _ = readByte(r)
 }
+
+func (c *command) get() []byte {
+	var out [2]byte
+	out[0] = c.command
+	out[1] = c.value
+
+	return out[:]
+}

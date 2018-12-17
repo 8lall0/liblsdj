@@ -61,12 +61,6 @@ func (i *instrument) clearAsPulse() {
 	i.instrument.clear()
 }
 
-func (i *instrument) writeName(r io.ReadSeeker) {
-	if _, err := io.ReadFull(r, i.name[:]); err != nil {
-		panic(err)
-	}
-}
-
 func (i *instrument) read(r io.ReadSeeker) {
 	i.insType, _ = readByte(r)
 

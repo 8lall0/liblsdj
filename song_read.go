@@ -181,6 +181,10 @@ func (s *Song) readBank1(r io.ReadSeeker) {
 		panic(err)
 	}
 
+	for i := 0; i < synthCnt; i++ {
+		s.synths[i].readSoftSynthParams(r)
+	}
+
 	s.meta.workTime.hours, _ = readByte(r)
 	s.meta.workTime.minutes, _ = readByte(r)
 	s.tempo, _ = readByte(r)
@@ -291,7 +295,7 @@ func checkRb(r io.ReadSeeker, position int64) bool {
 		panic(err)
 	}
 
-	return (rb[0] == 'r' && rb[1] == 'b')
+	return rb[0] == 'r' && rb[1] == 'b'
 }
 
 func SongRead(r io.ReadSeeker) (Song, error) {
@@ -306,13 +310,13 @@ func SongRead(r io.ReadSeeker) (Song, error) {
 
 	pos, _ := r.Seek(0, io.SeekCurrent)
 
-	if !checkRb(r, 0x1E78) {
+	if !checkRb(r, pos+0x1E78) {
 		return s, fmt.Errorf("memory flag 'rb' not found at 0x1E78")
 	}
-	if !checkRb(r, 0x3E80) {
+	if !checkRb(r, pos+0x3E80) {
 		return s, fmt.Errorf("memory flag 'rb' not found at 0x3E80")
 	}
-	if !checkRb(r, 0x7FF0) {
+	if !checkRb(r, pos+0x7FF0) {
 		return s, fmt.Errorf("memory flag 'rb' not found at 0x7FF0")
 	}
 

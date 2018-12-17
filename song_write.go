@@ -11,11 +11,12 @@ func (s *Song) writeBank0(w io.WriteSeeker) {
 		}
 	}
 
-	// TODO i bookmarks sono tutti i pulse+wav+no oppure (pul-wa-no)*i???
+	// TODO controlla bookmarks
 	_, _ = w.Write(s.bookmarks.pulse1[:])
 	_, _ = w.Write(s.bookmarks.pulse2[:])
 	_, _ = w.Write(s.bookmarks.wave[:])
 	_, _ = w.Write(s.bookmarks.noise[:])
+
 	_, _ = w.Write(s.reserved1030[:])
 
 	for i := 0; i < len(s.grooves); i++ {
@@ -128,7 +129,7 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
-			// TODO get command1
+			_, _ = w.Write(s.tables[i].getCommand1())
 		} else {
 			_, _ = w.Write(tableLengthZero[:])
 		}
@@ -136,7 +137,7 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
-			// TODO get command1
+			_, _ = w.Write(s.tables[i].getCommand1())
 		} else {
 			_, _ = w.Write(tableLengthZero[:])
 		}
@@ -144,7 +145,7 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
-			// TODO get command2
+			_, _ = w.Write(s.tables[i].getCommand2())
 		} else {
 			_, _ = w.Write(tableLengthZero[:])
 		}
@@ -152,7 +153,7 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
-			// TODO get command2
+			_, _ = w.Write(s.tables[i].getCommand2())
 		} else {
 			_, _ = w.Write(tableLengthZero[:])
 		}
@@ -163,18 +164,19 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 	_, _ = w.Write(chainAllocTable[:])
 
 	for i := 0; i < synthCnt; i++ {
-		// TODO write_soft_synth_parameters
+		s.synths[i].writeSoftSynthParams(w)
 	}
 
-	// TODO controlla se viene prima minuti o ore
-	_ := writeByte(s.meta.workTime.minutes, w)
 	_ := writeByte(s.meta.workTime.hours, w)
+	_ := writeByte(s.meta.workTime.minutes, w)
+
 	_ := writeByte(s.tempo, w)
 	_ := writeByte(s.transposition, w)
-	// TODO controlla se viene prima minuti o ore
-	_ := writeByte(s.meta.totalTime.minutes, w)
-	_ := writeByte(s.meta.totalTime.hours, w)
+
 	_ := writeByte(s.meta.totalTime.days, w)
+	_ := writeByte(s.meta.totalTime.hours, w)
+	_ := writeByte(s.meta.totalTime.minutes, w)
+
 	_ := writeByte(s.reserved3fb9, w)
 	_ := writeByte(s.meta.keyDelay, w)
 	_ := writeByte(s.meta.keyRepeat, w)
@@ -190,7 +192,7 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 	var waveSynthOverwriteLocks [2]byte
 	for i := 0; i < synthCnt; i++ {
 		if s.synths[i].overwritten != 0 {
-			waveSynthOverwriteLocks[1-(i/8)] |= (1 << uint(i%8))
+			waveSynthOverwriteLocks[1-(i/8)] |= 1 << uint(i%8)
 		}
 	}
 	_, _ = w.Write(waveSynthOverwriteLocks[:])
