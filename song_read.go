@@ -298,7 +298,7 @@ func checkRb(r io.ReadSeeker, position int64) bool {
 	return rb[0] == 'r' && rb[1] == 'b'
 }
 
-func SongRead(r io.ReadSeeker) (Song, error) {
+func Read(r io.ReadSeeker) (Song, error) {
 	var s Song
 
 	var tableAllocTable [tableAllocTableSize]byte
