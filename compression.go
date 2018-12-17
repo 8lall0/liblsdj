@@ -61,7 +61,7 @@ func decompressSAByte(r io.ReadSeeker, w io.WriteSeeker, flag *bool) {
 	}
 }
 
-func Decompress(r io.ReadSeeker, w io.WriteSeeker, block1position int64, blocksize int) {
+func decompress(r io.ReadSeeker, w io.WriteSeeker, block1position int64, blocksize int) {
 	wStart, _ := w.Seek(0, io.SeekCurrent)
 	// TODO currentblockposition
 	//currentBlockPos, _ := r.Seek(0, io.SeekCurrent)

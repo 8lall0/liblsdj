@@ -19,7 +19,6 @@ func (ro *row) clear() {
 }
 
 func (ro *row) write(r io.ReadSeeker) {
-	// TODO errori
 	ro.pulse1, _ = readByte(r)
 	ro.pulse2, _ = readByte(r)
 	ro.wave, _ = readByte(r)
