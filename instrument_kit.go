@@ -92,15 +92,9 @@ func (i *instrumentKit) read(in *instrument, r io.ReadSeeker) {
 	}
 
 	in.automate = parseAutomate(b)
-
-	// TODO: continua da qui
+	i.vibDirection = vibDirection(b & 1)
 
 	version := byte(1)
-
-	i.drumMode = parseDrumMode(b, version)
-	i.transpose = parseTranspose(b, version)
-
-	in.automate = parseAutomate(b)
 	if version < 4 {
 		switch (b >> 1) & 3 {
 		case 0:
@@ -134,41 +128,34 @@ func (i *instrumentKit) read(in *instrument, r io.ReadSeeker) {
 			i.vibShape = vibSquare
 		}
 	}
+
+	// byte 6
 	b, _ = readByte(r)
 	in.table = parseTable(b)
 
+	// byte 7
 	b, _ = readByte(r)
 	in.panning = parsePanning(b)
 
-	// byte 8 è vuoto
-	_, _ = r.Seek(1, io.SeekCurrent)
+	// byte 8
+	i.pitch, _ = readByte(r)
 
+	// byte 9
 	b, _ = readByte(r)
-	i.playback = parsePlaybackMode(b)
-
-	// WAVE length and speed changed in version 6
-	if version >= 7 {
-		b, _ = readByte(r) // Byte 10
-		i.length = 0xf - (b & 0xf)
-
-		b, _ = readByte(r) // Byte 11
-		i.speed = b + 4
-	} else if version == 6 {
-		b, _ = readByte(r) // Byte 10
-		i.length = b & 0xf
-
-		b, _ = readByte(r) // Byte 11
-		i.speed = b + 1
-	} else {
-		_, _ = r.Seek(2, io.SeekCurrent) // Bytes 12-13 are empty
+	if (b>>7)&1 != 0 {
+		i.loop2 = kitLoopAttack
 	}
+	i.kit2 = b & 0x3f
 
-	_, _ = r.Seek(2, io.SeekCurrent) // Bytes 10-13 are empty
+	// byte 10
 	b, _ = readByte(r)
-	if version < 6 {
-		i.length = (b >> 4) & 0xf
-		i.speed = (b & 0xf) + 1
-	}
+	i.distortion = parseKitDistortion(b)
+	// byte 11
+	i.length2, _ = readByte(r)
+	// byte 12
+	i.offset1, _ = readByte(r)
+	// byte 13
+	i.offset2, _ = readByte(r)
 
-	_, _ = r.Seek(1, io.SeekCurrent) // Byte 15 is empty
+	_, _ = r.Seek(2, io.SeekCurrent) // Bytes 14 and 15 are empty
 }

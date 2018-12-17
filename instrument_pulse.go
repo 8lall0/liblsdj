@@ -57,7 +57,6 @@ func (i *instrumentPulse) read(in *instrument, r io.ReadSeeker) {
 	i.transpose = parseTranspose(b, version)
 	i.vibDirection = vibDirection(b & 1)
 
-	// TODO: migliora inserzione in instrument di base???
 	in.automate = parseAutomate(b)
 
 	if version < 4 {

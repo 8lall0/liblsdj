@@ -67,11 +67,12 @@ func (i *instrument) writeName(r io.ReadSeeker) {
 	}
 }
 
-// TODO prima di leggere strumenti specifici, dobbiamo leggere il tipo
 func (i *instrument) read(r io.ReadSeeker) {
 	i.insType, _ = readByte(r)
 
 	pos1, _ := r.Seek(0, io.SeekCurrent)
+
+	i.envelopeVolume, _ = readByte(r)
 
 	switch i.insType {
 	case 0:
@@ -86,9 +87,10 @@ func (i *instrument) read(r io.ReadSeeker) {
 		panic("Strumento non conosciuto")
 	}
 
-	pos2, _ := r.Seek(0, io.SeekCurrent)
-	// TODO dovrebbe fare 15, controlla analogo di assert per golang
-	fmt.Println(pos2 - pos1)
+	i.instrument.read(i, r)
 
-	i.envelopeVolume, _ = readByte(r)
+	pos2, _ := r.Seek(0, io.SeekCurrent)
+
+	fmt.Println(pos2 - pos1) // TODO dovrebbe fare 15, controlla analogo di assert per golang
+
 }
