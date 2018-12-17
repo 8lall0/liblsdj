@@ -1,6 +1,9 @@
 package liblsdj
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 type plVibSpeed byte
 type vibShape byte
@@ -32,8 +35,8 @@ const (
 )
 
 type instrumentT interface {
-	read(r io.ReadSeeker)
-	clearInstrument()
+	read(in *instrument, r io.ReadSeeker)
+	clear()
 }
 
 var instrumentDefault = [instrumentDefaultLen]byte{0, 0xA8, 0, 0, 0xFF, 0, 0, 3, 0, 0, 0xD0, 0, 0, 0, 0xF3, 0}
@@ -55,11 +58,37 @@ func (i *instrument) clearAsPulse() {
 	i.panning = panLeftRight
 	i.table = noTable
 	i.automate = 0
-	i.instrument.clearInstrument()
+	i.instrument.clear()
 }
 
 func (i *instrument) writeName(r io.ReadSeeker) {
 	if _, err := io.ReadFull(r, i.name[:]); err != nil {
 		panic(err)
 	}
+}
+
+// TODO prima di leggere strumenti specifici, dobbiamo leggere il tipo
+func (i *instrument) read(r io.ReadSeeker) {
+	i.insType, _ = readByte(r)
+
+	pos1, _ := r.Seek(0, io.SeekCurrent)
+
+	switch i.insType {
+	case 0:
+		i.instrument = new(instrumentPulse)
+	case 1:
+		i.instrument = new(instrumentWave)
+	case 2:
+		i.instrument = new(instrumentKit)
+	case 3:
+		i.instrument = new(instrumentNoise)
+	default:
+		panic("Strumento non conosciuto")
+	}
+
+	pos2, _ := r.Seek(0, io.SeekCurrent)
+	// TODO dovrebbe fare 15, controlla analogo di assert per golang
+	fmt.Println(pos2 - pos1)
+
+	i.envelopeVolume, _ = readByte(r)
 }
