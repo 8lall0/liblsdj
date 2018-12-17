@@ -71,9 +71,16 @@ func (s *Song) readBank0(r io.ReadSeeker) {
 		panic(err)
 	}
 
-	// TODO: il check a null serve??
 	for i := 0; i < instrCnt; i++ {
-		s.instruments[i].writeName(r)
+		if s.instruments[i] != nil {
+			if _, err := io.ReadFull(r, s.instruments[i].name[:]); err != nil {
+				panic(err)
+			}
+		} else {
+			if _, err := r.Seek(instrumentNameLen, io.SeekCurrent); err != nil {
+				panic(err)
+			}
+		}
 	}
 
 	if _, err := io.ReadFull(r, s.reserved1fba[:]); err != nil {
@@ -104,12 +111,11 @@ func (s *Song) readBank1(r io.ReadSeeker) {
 
 	for i := 0; i < instrCnt; i++ {
 		if s.instruments[i] != nil {
-			// Salta tipo strumento!
+			// Instrument type
 			if _, err := r.Seek(1, io.SeekCurrent); err != nil {
 				panic(err)
 			}
-			// Evviva le interfacce!
-			s.instruments[i].instrument.read(r)
+			s.instruments[i].read(r)
 		} else {
 			if _, err := r.Seek(16, io.SeekCurrent); err != nil {
 				panic(err)
@@ -290,8 +296,6 @@ func checkRb(r io.ReadSeeker, position int64) bool {
 
 func SongRead(r io.ReadSeeker) (Song, error) {
 	var s Song
-	// TODO Ottieni posizione corrente
-	var cur int64
 
 	var tableAllocTable [tableAllocTableSize]byte
 	var instrAllocTable [instrAllocTableSize]byte
@@ -299,6 +303,8 @@ func SongRead(r io.ReadSeeker) (Song, error) {
 	var chainAllocTable [chainAllocTableSize]byte
 
 	s.clear()
+
+	pos, _ := r.Seek(0, io.SeekCurrent)
 
 	if !checkRb(r, 0x1E78) {
 		return s, fmt.Errorf("memory flag 'rb' not found at 0x1E78")
@@ -310,13 +316,13 @@ func SongRead(r io.ReadSeeker) (Song, error) {
 		return s, fmt.Errorf("memory flag 'rb' not found at 0x7FF0")
 	}
 
-	if _, err := r.Seek(cur+int64(0x7FFF), io.SeekStart); err != nil {
+	if _, err := r.Seek(pos+int64(0x7FFF), io.SeekStart); err != nil {
 		panic(err)
 	}
 
 	s.formatVersion, _ = readByte(r)
 
-	if _, err := r.Seek(cur+int64(0x2020), io.SeekStart); err != nil {
+	if _, err := r.Seek(pos+int64(0x2020), io.SeekStart); err != nil {
 		panic(err)
 	}
 	if _, err := io.ReadFull(r, tableAllocTable[:]); err != nil {
@@ -325,7 +331,7 @@ func SongRead(r io.ReadSeeker) (Song, error) {
 	if _, err := io.ReadFull(r, instrAllocTable[:]); err != nil {
 		panic(err)
 	}
-	if _, err := r.Seek(cur+int64(0x3E82), io.SeekStart); err != nil {
+	if _, err := r.Seek(pos+int64(0x3E82), io.SeekStart); err != nil {
 		panic(err)
 	}
 	if _, err := io.ReadFull(r, phraseAllocTable[:]); err != nil {
@@ -374,7 +380,7 @@ func SongRead(r io.ReadSeeker) (Song, error) {
 		}
 	}
 
-	if _, err := r.Seek(cur, io.SeekStart); err != nil {
+	if _, err := r.Seek(pos, io.SeekStart); err != nil {
 		panic(err)
 	}
 
