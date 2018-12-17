@@ -1,4 +1,4 @@
-package lsdj
+package liblsdj
 
 const phraseLen = 16
 

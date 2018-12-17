@@ -1,4 +1,4 @@
-package lsdj
+package liblsdj
 
 const (
 	songDecompressedSize = 0x8000

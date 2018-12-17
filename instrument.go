@@ -1,4 +1,4 @@
-package lsdj
+package liblsdj
 
 import "io"
 
@@ -37,6 +37,7 @@ type instrumentT interface {
 }
 
 var instrumentDefault = [instrumentDefaultLen]byte{0, 0xA8, 0, 0, 0xFF, 0, 0, 3, 0, 0, 0xD0, 0, 0, 0, 0xF3, 0}
+var instrumentNameEmpty = [instrumentNameLen]byte{0, 0, 0, 0, 0}
 
 type instrument struct {
 	name           [instrumentNameLen]byte

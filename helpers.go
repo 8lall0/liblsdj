@@ -1,4 +1,4 @@
-package lsdj
+package liblsdj
 
 import (
 	"io"
@@ -16,7 +16,7 @@ func readByte(r io.ReadSeeker) (b byte, err error) {
 func writeByte(b byte, w io.WriteSeeker) (err error) {
 	var p [1]byte
 
-	p[0] = b;
+	p[0] = b
 	_, err = w.Write(p[:])
 
 	return

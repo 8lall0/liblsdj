@@ -1,4 +1,4 @@
-package lsdj
+package liblsdj
 
 import (
 	"fmt"
@@ -92,7 +92,7 @@ func (s *Song) readBank1(r io.ReadSeeker) {
 
 	for i := 0; i < chainCnt; i++ {
 		if s.chains[i] != nil {
-			if _, err := io.ReadFull(r, s.chains[i].prases[:]); err != nil {
+			if _, err := io.ReadFull(r, s.chains[i].phrases[:]); err != nil {
 				panic(err)
 			}
 		} else {
@@ -285,7 +285,7 @@ func checkRb(r io.ReadSeeker, position int64) bool {
 		panic(err)
 	}
 
-	return (rb[0] == 'r' && rb[1] == 'b');
+	return (rb[0] == 'r' && rb[1] == 'b')
 }
 
 func SongRead(r io.ReadSeeker) (Song, error) {
@@ -336,7 +336,7 @@ func SongRead(r io.ReadSeeker) (Song, error) {
 	}
 	/*
 		Qui ragiono in logica opposta: se non c'è tabella pongo quell'indice a nil
-	 */
+	*/
 	for i := 0; i < tableAllocTableSize; i++ {
 		if tableAllocTable[i] == 0 {
 			s.tables[i] = nil

@@ -1,14 +1,14 @@
-package lsdj
+package liblsdj
 
 import "io"
 
 const channelCnt = 4
 
 type row struct {
-	pulse1   byte
-	pulse2   byte
-	wave     byte
-	noise    byte
+	pulse1 byte
+	pulse2 byte
+	wave   byte
+	noise  byte
 }
 
 func (ro *row) clear() {

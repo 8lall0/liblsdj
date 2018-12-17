@@ -1,4 +1,4 @@
-package lsdj
+package liblsdj
 
 // TODO: controlla bitwise
 // TODO: controlla condizione effettivamente
