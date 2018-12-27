@@ -86,7 +86,6 @@ func decompress(r io.ReadSeeker, w io.WriteSeeker, block1position *int64) {
 
 	wEnd, _ := w.Seek(0, io.SeekCurrent)
 	if (wEnd - wStart) != songDecompressedSize {
-		// TODO Questo è un errore se avviene!
 		fmt.Println("Decompressed size: ", wEnd-wStart, " Normal size: ", songDecompressedSize)
 	}
 
@@ -97,9 +96,8 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 		return 0
 	}
 	var b byte
-	nextEvent := []byte{0, 0, 0}
 	wStart, _ := w.Seek(0, io.SeekCurrent)
-	wEnd := wStart + songDecompressedSize
+	//wEnd := wStart + songDecompressedSize
 
 	rStart, _ := r.Seek(0, io.SeekCurrent)
 	rEnd := rStart + songDecompressedSize
@@ -107,14 +105,15 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 	curBlockSize := 0
 	currentBlock := startBlock
 
-	// TODO poiché non ho aritmetica dei puntatori, devo incrementare la i per i cazzi miei
-	// TODO forse posso usare la positione con seek, ma me la devo controllare un attimo
 	for pos, _ := r.Seek(0, io.SeekCurrent); pos < rEnd; pos, _ = r.Seek(0, io.SeekCurrent) {
 		var readWave [waveLen]byte
 		var readInstr [instrumentDefaultLen]byte
+
+		nextEvent := []byte{0, 0, 0}
+
 		// Are we reading a default wave? If so, we can compress these!
-		defWaveLengthCnt := byte(0)
-		for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < wEnd) && (defWaveLengthCnt != 0xff); _, _ = r.Read(readWave[:]) {
+		var defWaveLengthCnt byte
+		for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < rEnd) && (defWaveLengthCnt != 0xff); _, _ = r.Read(readWave[:]) {
 			if defWaveLengthCnt == 0 {
 				_, _ = r.Read(readWave[:])
 			}
@@ -131,8 +130,7 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 			nextEvent = []byte{specialActionByte, defaultWaveByte, defWaveLengthCnt}
 		} else {
 			// Are we reading a default instrument? If so, we can compress these!
-			// TODO Questo legge le default instr
-			defInstrumentLengthCnt := byte(0)
+			var defInstrumentLengthCnt byte
 			for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < rEnd) && (defInstrumentLengthCnt != 0xff); _, _ = r.Read(readInstr[:]) {
 				if defInstrumentLengthCnt == 0 {
 					_, _ = r.Read(readInstr[:])
@@ -151,6 +149,7 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 			} else {
 				// Not a default wave, time to do "normal" compression
 				b, _ = readByte(r)
+				_, _ = r.Seek(-1, io.SeekCurrent) //read at the same place
 				switch b {
 				case runLengthEncodingByte:
 					nextEvent = []byte{runLengthEncodingByte, runLengthEncodingByte}
@@ -159,6 +158,7 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 					nextEvent = []byte{specialActionByte, specialActionByte}
 					_, _ = r.Seek(1, io.SeekCurrent) //read++
 				default:
+					//begin, _ := r.Seek(0, io.SeekCurrent)
 					c := b
 					if pos, _ := r.Seek(0, io.SeekCurrent); pos+3 < rEnd {
 						read1, _ := readByte(r)
@@ -172,14 +172,18 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 							for cnt = 0; (read3 == c) && (cnt != 0xff); cnt++ {
 								read3, _ = readByte(r)
 							}
-							nextEvent = []byte{runLengthEncodingByte, c, cnt}
-						} else {
-							// read3 deve incrementare proprio il valore del riferimento
-							tmp, _ := readByte(r)
-							nextEvent = []byte{tmp}
-						}
-					}
+							//assert
+							//tmpEnd, _ := r.Seek(0, io.SeekCurrent)
+							//fmt.Println("assert", tmpEnd - begin, cnt)
 
+							nextEvent = []byte{runLengthEncodingByte, c, cnt}
+						}
+					} else {
+						_, _ = r.Seek(1, io.SeekCurrent) //read++
+						tmp, _ := readByte(r)
+						_, _ = r.Seek(-1, io.SeekCurrent)
+						nextEvent = []byte{tmp}
+					}
 				}
 			}
 		}
@@ -215,6 +219,7 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 		}
 		_, _ = w.Write(nextEvent)
 		curBlockSize += len(nextEvent)
+		fmt.Println(curBlockSize)
 	}
 
 	_ = writeByte(specialActionByte, w)
