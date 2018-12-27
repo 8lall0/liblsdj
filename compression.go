@@ -1,7 +1,6 @@
 package liblsdj
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 )
@@ -97,140 +96,132 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 	if startBlock == byte(blockCnt+1) {
 		return 0
 	}
-
 	var b byte
-	// TODO temporanea, poi controlla meglio
-	var readWave [waveLen]byte
-	var readInstr [instrumentDefaultLen]byte
-
 	nextEvent := []byte{0, 0, 0}
 	wStart, _ := w.Seek(0, io.SeekCurrent)
+	wEnd := wStart + songDecompressedSize
+
+	rStart, _ := r.Seek(0, io.SeekCurrent)
+	rEnd := rStart + songDecompressedSize
+
 	curBlockSize := 0
 	currentBlock := startBlock
 
 	// TODO poiché non ho aritmetica dei puntatori, devo incrementare la i per i cazzi miei
 	// TODO forse posso usare la positione con seek, ma me la devo controllare un attimo
-	for i := 0; i < songDecompressedSize; {
+	for pos, _ := r.Seek(0, io.SeekCurrent); pos < rEnd; pos, _ = r.Seek(0, io.SeekCurrent) {
+		var readWave [waveLen]byte
+		var readInstr [instrumentDefaultLen]byte
 		// Are we reading a default wave? If so, we can compress these!
-		// TODO Questo legge le default wave
 		defWaveLengthCnt := byte(0)
-		_, _ = r.Read(readWave[:])
-		i += waveLen // manuale incremento i
-		for (i+waveLen < songDecompressedSize) &&
-			bytes.Equal(readWave[:], defaultWave[:]) &&
-			(defWaveLengthCnt != 0xff) {
-
-			defWaveLengthCnt++
-			_, _ = r.Read(readWave[:])
-			i += waveLen // manuale incremento i
+		for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < wEnd) && (defWaveLengthCnt != 0xff); _, _ = r.Read(readWave[:]) {
+			if defWaveLengthCnt == 0 {
+				_, _ = r.Read(readWave[:])
+			}
+			if readWave == defaultWave {
+				defWaveLengthCnt++
+			} else {
+				_, _ = r.Seek(-int64(defWaveLengthCnt), io.SeekCurrent)
+				break
+			}
+			pos, _ = r.Seek(0, io.SeekCurrent)
 		}
-		//Forse devo seekare uno indietro
-		_, _ = r.Seek(-int64(defWaveLengthCnt), io.SeekCurrent)
-		i -= waveLen
+
 		if defWaveLengthCnt > 0 {
 			nextEvent = []byte{specialActionByte, defaultWaveByte, defWaveLengthCnt}
 		} else {
 			// Are we reading a default instrument? If so, we can compress these!
 			// TODO Questo legge le default instr
 			defInstrumentLengthCnt := byte(0)
-			_, _ = r.Read(readInstr[:])
-			i += instrumentDefaultLen // manuale incremento i
-			for (i+instrumentDefaultLen < songDecompressedSize) &&
-				bytes.Equal(readInstr[:], instrumentDefault[:]) &&
-				(defInstrumentLengthCnt != 0xff) {
-
-				defInstrumentLengthCnt++
-				_, _ = r.Read(readInstr[:])
-				i += instrumentDefaultLen // manuale incremento i
+			for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < rEnd) && (defInstrumentLengthCnt != 0xff); _, _ = r.Read(readInstr[:]) {
+				if defInstrumentLengthCnt == 0 {
+					_, _ = r.Read(readInstr[:])
+				}
+				if readInstr == instrumentDefault {
+					defInstrumentLengthCnt++
+				} else {
+					_, _ = r.Seek(-int64(instrumentDefaultLen), io.SeekCurrent)
+					break
+				}
+				pos, _ = r.Seek(0, io.SeekCurrent)
 			}
-			//Forse devo seekare uno indietro
-			_, _ = r.Seek(-int64(instrumentDefaultLen), io.SeekCurrent)
-			i -= instrumentDefaultLen
 
 			if defInstrumentLengthCnt > 0 {
 				nextEvent = []byte{specialActionByte, defaultInstrumentByte, defInstrumentLengthCnt}
 			} else {
 				// Not a default wave, time to do "normal" compression
 				b, _ = readByte(r)
-				i++ // manuale incremento i
 				switch b {
 				case runLengthEncodingByte:
 					nextEvent = []byte{runLengthEncodingByte, runLengthEncodingByte}
-					b, _ = readByte(r)
-					i++ // manuale incremento i
+					_, _ = r.Seek(1, io.SeekCurrent) //read++
 				case specialActionByte:
 					nextEvent = []byte{specialActionByte, specialActionByte}
-					b, _ = readByte(r)
-					i++ // manuale incremento i
+					_, _ = r.Seek(1, io.SeekCurrent) //read++
 				default:
 					c := b
-					if i+3 < songDecompressedSize {
+					if pos, _ := r.Seek(0, io.SeekCurrent); pos+3 < rEnd {
 						read1, _ := readByte(r)
-						i++ // manuale incremento i
 						read2, _ := readByte(r)
-						i++ // manuale incremento i
 						read3, _ := readByte(r)
-						i++ // manuale incremento i
-
 						_, _ = r.Seek(-3, io.SeekCurrent)
 
-						//TODO caso END
 						// TODO sto codice fa SCHIFO e non so nemmeno se è CORRETTO PORCODIO
 						if read1 == c && read2 == c && read3 == c {
 							var cnt byte
-							for cnt = 0; (read3 == c) && (cnt != 0xff); {
+							for cnt = 0; (read3 == c) && (cnt != 0xff); cnt++ {
 								read3, _ = readByte(r)
-								i++ // manuale incremento i
-								cnt++
 							}
 							nextEvent = []byte{runLengthEncodingByte, c, cnt}
 						} else {
 							// read3 deve incrementare proprio il valore del riferimento
-							nextEvent = []byte{read3 + 1}
-							//read3, _ = readByte(r)
-							//i++ // manuale incremento i
+							tmp, _ := readByte(r)
+							nextEvent = []byte{tmp}
 						}
 					}
 
 				}
 			}
+		}
 
-			if curBlockSize+len(nextEvent)+2 >= blockSize {
-				_ = writeByte(specialActionByte, w)
-				_ = writeByte(currentBlock+1, w)
+		// See if the event would still fit in this block
+		// If not, move to a new block
+		if curBlockSize+len(nextEvent)+2 >= blockSize {
+			// Write the "next block" command
+			_ = writeByte(specialActionByte, w)
+			_ = writeByte(currentBlock+1, w)
 
-				curBlockSize += 2
-				// assert curblocksize <= blockSize
-				zeroes := make([]byte, blockSize-curBlockSize)
+			curBlockSize += 2
+			// assert curblocksize <= blockSize
+			zeroes := make([]byte, blockSize-curBlockSize)
+			_, _ = w.Write(zeroes)
+
+			currentBlock += 1
+			curBlockSize = 0
+
+			// Have we reached the maximum block count?
+			// If so, roll back
+			if currentBlock == byte(blockCnt)+1 {
+				pos, _ := w.Seek(0, io.SeekCurrent)
+				_, _ = w.Seek(wStart, io.SeekStart)
+
+				zeroes := make([]byte, pos-wStart)
 				_, _ = w.Write(zeroes)
-
-				currentBlock += 1
-				curBlockSize = 0
-
-				// Have we reached the maximum block count?
-				// If so, roll back
-				if currentBlock == byte(blockCnt)+1 {
-					pos, _ := w.Seek(0, io.SeekCurrent)
-					zeroes := make([]byte, pos-wStart)
-					_, _ = w.Write(zeroes)
-				}
 
 				// seek back
 				_, _ = w.Seek(wStart, io.SeekStart)
 				return 0
 			}
 		}
-
+		_, _ = w.Write(nextEvent)
 		curBlockSize += len(nextEvent)
 	}
+
 	_ = writeByte(specialActionByte, w)
 	_ = writeByte(endOfFileByte, w)
 
-	if curBlockSize > 0 {
-		for curBlockSize += 2; curBlockSize < blockSize; curBlockSize++ {
-			_ = writeByte(0, w)
-		}
-	}
+	zeroes := make([]byte, blockSize-curBlockSize)
+	_, _ = w.Write(zeroes)
 
 	return int(currentBlock - startBlock + 1)
 }
