@@ -43,3 +43,18 @@ func (i *instrumentNoise) read(in *instrument, r io.ReadSeeker) {
 
 	_, _ = r.Seek(8, io.SeekCurrent) // Bytes 8-15 are empty
 }
+
+func (i *instrumentNoise) write(in *instrument, w io.WriteSeeker, version byte) {
+
+	_ = writeByte(3, w)
+	_ = writeByte(in.envelopeVolume, w)
+	_ = writeByte(createScommandByte(i.sCommand), w)
+	_ = writeByte(createLengthByte(i.length), w)
+	_ = writeByte(i.shape, w)
+	_ = writeByte(createAutomateByte(in.automate), w)
+	_ = writeByte(createTableByte(in.table), w)
+	_ = writeByte(createPanningByte(in.panning), w)
+
+	empty := []byte{0, 0, 0xD0, 0, 0, 0, 0xF3, 0}
+	_, _ = w.Write(empty) // Bytes 8-15 are empty
+}
