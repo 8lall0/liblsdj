@@ -41,7 +41,7 @@ func (i *instrumentPulse) clear() {
 	i.fineTune = 0
 }
 
-func (i *instrumentPulse) read(in *instrument, r io.ReadSeeker) {
+func (i *instrumentPulse) read(in *instrument, r io.ReadSeeker, version byte) {
 	var b byte
 	i.pulse2tune, _ = readByte(r)
 
@@ -50,9 +50,7 @@ func (i *instrumentPulse) read(in *instrument, r io.ReadSeeker) {
 
 	i.sweep, _ = readByte(r)
 
-	// TODO trova modo di leggere version
 	b, _ = readByte(r)
-	version := byte(1)
 	i.drumMode = parseDrumMode(b, version)
 	i.transpose = parseTranspose(b, version)
 	i.vibDirection = vibDirection(b & 1)

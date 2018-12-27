@@ -35,7 +35,7 @@ const (
 )
 
 type instrumentT interface {
-	read(in *instrument, r io.ReadSeeker)
+	read(in *instrument, r io.ReadSeeker, version byte)
 	write(in *instrument, w io.WriteSeeker, version byte)
 	clear()
 }

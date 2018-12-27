@@ -39,7 +39,7 @@ func (i *instrumentWave) clear() {
 	i.speed = 4
 }
 
-func (i *instrumentWave) read(in *instrument, r io.ReadSeeker) {
+func (i *instrumentWave) read(in *instrument, r io.ReadSeeker, version byte) {
 	var b byte
 
 	b, _ = readByte(r)
@@ -49,7 +49,6 @@ func (i *instrumentWave) read(in *instrument, r io.ReadSeeker) {
 	// Byte 3 e 4 sono vuoti
 	_, _ = r.Seek(2, io.SeekCurrent)
 
-	version := byte(1)
 	b, _ = readByte(r)
 	i.drumMode = parseDrumMode(b, version)
 	i.transpose = parseTranspose(b, version)

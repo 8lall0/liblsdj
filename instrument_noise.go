@@ -21,7 +21,7 @@ func (i *instrumentNoise) clear() {
 	i.sCommand = sCommandFree
 }
 
-func (i *instrumentNoise) read(in *instrument, r io.ReadSeeker) {
+func (i *instrumentNoise) read(in *instrument, r io.ReadSeeker, version byte) {
 	var b byte
 
 	b, _ = readByte(r)
