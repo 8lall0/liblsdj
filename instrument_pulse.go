@@ -105,9 +105,7 @@ func (i *instrumentPulse) read(in *instrument, r io.ReadSeeker) {
 func (i *instrumentPulse) write(in *instrument, w io.WriteSeeker, version byte) {
 	var b byte
 
-	b = 0
-
-	_ = writeByte(b, w)
+	_ = writeByte(0, w)
 	_ = writeByte(in.envelopeVolume, w)
 	_ = writeByte(i.pulse2tune, w)
 
