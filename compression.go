@@ -97,7 +97,6 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 	}
 	var b byte
 	wStart, _ := w.Seek(0, io.SeekCurrent)
-	//wEnd := wStart + songDecompressedSize
 
 	rStart, _ := r.Seek(0, io.SeekCurrent)
 	rEnd := rStart + songDecompressedSize
@@ -113,17 +112,17 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 
 		// Are we reading a default wave? If so, we can compress these!
 		var defWaveLengthCnt byte
-		for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < rEnd) && (defWaveLengthCnt != 0xff); _, _ = r.Read(readWave[:]) {
+		for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < rEnd) && (defWaveLengthCnt != 0xff); pos, _ = r.Seek(0, io.SeekCurrent) {
 			if defWaveLengthCnt == 0 {
 				_, _ = r.Read(readWave[:])
 			}
 			if readWave == defaultWave {
 				defWaveLengthCnt++
+				_, _ = r.Read(readWave[:])
 			} else {
 				_, _ = r.Seek(-int64(defWaveLengthCnt), io.SeekCurrent)
 				break
 			}
-			pos, _ = r.Seek(0, io.SeekCurrent)
 		}
 
 		if defWaveLengthCnt > 0 {
@@ -131,17 +130,17 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 		} else {
 			// Are we reading a default instrument? If so, we can compress these!
 			var defInstrumentLengthCnt byte
-			for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < rEnd) && (defInstrumentLengthCnt != 0xff); _, _ = r.Read(readInstr[:]) {
+			for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < rEnd) && (defInstrumentLengthCnt != 0xff); pos, _ = r.Seek(0, io.SeekCurrent) {
 				if defInstrumentLengthCnt == 0 {
 					_, _ = r.Read(readInstr[:])
 				}
 				if readInstr == instrumentDefault {
 					defInstrumentLengthCnt++
+					_, _ = r.Read(readInstr[:])
 				} else {
 					_, _ = r.Seek(-int64(instrumentDefaultLen), io.SeekCurrent)
 					break
 				}
-				pos, _ = r.Seek(0, io.SeekCurrent)
 			}
 
 			if defInstrumentLengthCnt > 0 {
@@ -149,17 +148,16 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 			} else {
 				// Not a default wave, time to do "normal" compression
 				b, _ = readByte(r)
-				_, _ = r.Seek(-1, io.SeekCurrent) //read at the same place
 				switch b {
 				case runLengthEncodingByte:
 					nextEvent = []byte{runLengthEncodingByte, runLengthEncodingByte}
-					_, _ = r.Seek(1, io.SeekCurrent) //read++
 				case specialActionByte:
 					nextEvent = []byte{specialActionByte, specialActionByte}
-					_, _ = r.Seek(1, io.SeekCurrent) //read++
 				default:
-					//begin, _ := r.Seek(0, io.SeekCurrent)
 					c := b
+
+					// See if we can do run-length encoding
+					_, _ = r.Seek(-1, io.SeekCurrent) //read at the same place
 					if pos, _ := r.Seek(0, io.SeekCurrent); pos+3 < rEnd {
 						read1, _ := readByte(r)
 						read2, _ := readByte(r)
@@ -169,19 +167,13 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 						// TODO sto codice fa SCHIFO e non so nemmeno se è CORRETTO PORCODIO
 						if read1 == c && read2 == c && read3 == c {
 							var cnt byte
-							for cnt = 0; (read3 == c) && (cnt != 0xff); cnt++ {
+							for ; (read3 == c) && (cnt != 0xff); cnt++ {
 								read3, _ = readByte(r)
 							}
-							//assert
-							//tmpEnd, _ := r.Seek(0, io.SeekCurrent)
-							//fmt.Println("assert", tmpEnd - begin, cnt)
-
 							nextEvent = []byte{runLengthEncodingByte, c, cnt}
 						}
 					} else {
-						_, _ = r.Seek(1, io.SeekCurrent) //read++
 						tmp, _ := readByte(r)
-						_, _ = r.Seek(-1, io.SeekCurrent)
 						nextEvent = []byte{tmp}
 					}
 				}

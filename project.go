@@ -11,7 +11,7 @@ const projectNameLen = 8
 type Project struct {
 	name    [projectNameLen]byte
 	version byte
-	song    Song
+	song    *Song
 }
 
 func ReadLsdsng(r io.ReadSeeker) (p Project) {
@@ -42,7 +42,7 @@ func WriteLsdsng(w io.WriteSeeker, p Project) {
 	b := new(writerseeker.WriterSeeker)
 	_, _ = b.Write(tmp)
 	_, _ = b.Seek(0, io.SeekStart)
-	WriteSong(b, &p.song)
+	WriteSong(b, p.song)
 	asd := compress(b.BytesReader(), w, 1)
 
 	fmt.Println(asd)

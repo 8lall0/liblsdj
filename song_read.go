@@ -298,14 +298,13 @@ func checkRb(r io.ReadSeeker, position int64) bool {
 	return rb[0] == 'r' && rb[1] == 'b'
 }
 
-func ReadSong(r io.ReadSeeker, version byte) (Song, error) {
-	var s Song
-
+func ReadSong(r io.ReadSeeker, version byte) (s *Song, err error) {
 	var tableAllocTable [tableAllocTableSize]byte
 	var instrAllocTable [instrAllocTableSize]byte
 	var phraseAllocTable [phraseAllocTableSize]byte
 	var chainAllocTable [chainAllocTableSize]byte
 
+	s = new(Song)
 	s.clear()
 
 	pos, _ := r.Seek(0, io.SeekCurrent)
@@ -397,5 +396,5 @@ func ReadSong(r io.ReadSeeker, version byte) (Song, error) {
 	s.readBank2(r)
 	s.readBank3(r)
 
-	return s, nil
+	return
 }
