@@ -126,3 +126,78 @@ func (i *instrumentWave) read(in *instrument, r io.ReadSeeker) {
 
 	_, _ = r.Seek(1, io.SeekCurrent) // Byte 15 is empty
 }
+
+func (i *instrumentWave) write(in *instrument, w io.WriteSeeker, version byte) {
+	var b byte
+
+	// byte 0
+	_ = writeByte(1, w)
+	// byte 1
+	_ = writeByte(createWaveVolumeByte(in.envelopeVolume), w)
+	// byte 2
+	b = ((i.synth & 0xf) << 4) | (i.repeat & 0xf)
+	_ = writeByte(b, w)
+	// byte 3 empty
+	_ = writeByte(0, w)
+	// byte 4 empty
+	_ = writeByte(0xff, w)
+
+	b = createDrumModeByte(i.drumMode, version)
+	b |= createTransposeByte(i.transpose, version)
+	b |= createAutomateByte(in.automate)
+	b |= createVibratoDirectionByte(i.vibDirection)
+	if version < 4 {
+		switch i.vibShape {
+		case vibSawtooth:
+			b |= 2
+		case vibSquare:
+			b |= 6
+		case vibTriangle:
+			if i.plVibSpeed != plVibFast {
+				b |= 4
+			}
+		}
+	} else {
+		b |= (byte(i.vibShape) & 3) << 1
+		if i.plVibSpeed == plVibTick {
+			b |= 0x10
+		} else if i.plVibSpeed == plVibStep {
+			b |= 0x80
+		}
+	}
+	_ = writeByte(b, w)
+	_ = writeByte(createTableByte(in.table), w)
+	_ = writeByte(createPanningByte(in.panning), w)
+	_ = writeByte(0, w)
+
+	_ = writeByte(createPlaybackModeByte(i.playback), w)
+
+	if version >= 7 {
+		b = 0xf - (i.length & 0xF)
+		_ = writeByte(b, w)
+
+		b = i.speed - 4
+		_ = writeByte(b, w)
+	} else if version == 6 {
+		b = i.length & 0xF
+		_ = writeByte(b, w)
+
+		b = i.speed - 1
+		_ = writeByte(b, w)
+	} else {
+		_ = writeByte(0, w) // byte 10 is empty
+		_ = writeByte(0, w) // byte 11 is empty
+	}
+
+	_ = writeByte(0, w) // byte 12 is empty
+	_ = writeByte(0, w) // byte 13 is empty
+
+	if version < 6 {
+		b = ((i.length & 0xf) << 4) | ((i.speed - 1) & 0xf)
+		_ = writeByte(b, w)
+	} else {
+		_ = writeByte(0, w) // byte 14 is empty
+	}
+
+	_ = writeByte(0, w) // byte 15 is empty
+}
