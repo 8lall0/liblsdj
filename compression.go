@@ -60,32 +60,38 @@ func decompressSAByte(r io.ReadSeeker, w io.WriteSeeker, curBlockPosition *int64
 		if block1Position != nil {
 			*curBlockPosition = *block1Position + (int64(b)-1)*int64(blockSize)
 		} else {
-			*curBlockPosition += blockSize
+			*curBlockPosition += int64(blockSize)
 		}
-		_, _ = r.Seek(*curBlockPosition, io.SeekCurrent)
+		_, _ = r.Seek(*curBlockPosition, io.SeekStart)
 	}
 }
 
 func decompress(r io.ReadSeeker, w io.WriteSeeker, block1position *int64) {
-	wStart, _ := w.Seek(0, io.SeekCurrent)
+	var b byte
 
+	wStart, _ := w.Seek(0, io.SeekCurrent)
 	currentBlockPos, _ := r.Seek(0, io.SeekCurrent)
 
-	b, _ := readByte(r)
 	for loop := true; loop; {
+		b, _ = readByte(r)
+		fmt.Println(b)
+
 		switch b {
 		case runLengthEncodingByte:
+			fmt.Println("RLE")
 			decompressRLEByte(r, w)
 		case specialActionByte:
+			fmt.Println("SA")
 			decompressSAByte(r, w, &currentBlockPos, block1position, &loop)
 		default:
+			fmt.Println("DEF")
 			_ = writeByte(b, w)
 		}
 	}
 
 	wEnd, _ := w.Seek(0, io.SeekCurrent)
 	if (wEnd - wStart) != songDecompressedSize {
-		fmt.Println("Decompressed size: ", wEnd-wStart)
+		fmt.Println("Decompressed size: ", wEnd-wStart, " Normal size: ", songDecompressedSize)
 	}
 
 }
@@ -194,8 +200,8 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte, blocksize int,
 
 				curBlockSize += 2
 				// assert curblocksize <= blockSize
-				var zeroes [curBlockSize - blocksize]byte
-				_, _ = w.Write(zeroes[:])
+				zeroes := make([]byte, curBlockSize-blocksize)
+				_, _ = w.Write(zeroes)
 
 				currentBlock++
 				curBlockSize = 0
@@ -204,8 +210,8 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte, blocksize int,
 				// If so, roll back
 				if currentBlock == byte(blockCount)+1 {
 					pos, _ := w.Seek(0, io.SeekCurrent)
-					var zeroes [pos - wStart]byte
-					_, _ = w.Write(zeroes[:])
+					zeroes := make([]byte, pos-wStart)
+					_, _ = w.Write(zeroes)
 				}
 
 				// seek back
