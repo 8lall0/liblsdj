@@ -12,6 +12,15 @@ func main() {
 		fmt.Println("Errore")
 		return
 	}
-	_ = liblsdj.ReadLsdsng(f)
+	pro := liblsdj.ReadLsdsng(f)
+	_ = f.Close()
+
+	wr, err := os.Create("test.lsdsng")
+	if err != nil {
+		fmt.Println("Errore")
+		return
+	}
+	liblsdj.WriteLsdsng(wr, pro)
+	_ = wr.Close()
 
 }

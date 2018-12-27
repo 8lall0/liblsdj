@@ -242,3 +242,10 @@ func (s *Song) writeBank3(w io.WriteSeeker) {
 	_, _ = w.Write(s.reserved7ff2[:])
 	_ = writeByte(s.formatVersion, w)
 }
+
+func WriteSong(w io.WriteSeeker, s *Song) {
+	s.writeBank0(w)
+	s.writeBank1(w)
+	s.writeBank2(w)
+	s.writeBank3(w)
+}

@@ -1,6 +1,7 @@
 package liblsdj
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 )
@@ -92,8 +93,8 @@ func decompress(r io.ReadSeeker, w io.WriteSeeker, block1position *int64) {
 
 }
 
-func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte, blocksize int, blockCount int) int {
-	if startBlock == byte(blockCount+1) {
+func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
+	if startBlock == byte(blockCnt+1) {
 		return 0
 	}
 
@@ -116,16 +117,16 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte, blocksize int,
 		_, _ = r.Read(readWave[:])
 		i += waveLen // manuale incremento i
 		for (i+waveLen < songDecompressedSize) &&
-			(readWave == defaultWave) &&
+			bytes.Equal(readWave[:], defaultWave[:]) &&
 			(defWaveLengthCnt != 0xff) {
 
 			defWaveLengthCnt++
 			_, _ = r.Read(readWave[:])
 			i += waveLen // manuale incremento i
 		}
-
 		//Forse devo seekare uno indietro
-
+		_, _ = r.Seek(-int64(defWaveLengthCnt), io.SeekCurrent)
+		i -= waveLen
 		if defWaveLengthCnt > 0 {
 			nextEvent = []byte{specialActionByte, defaultWaveByte, defWaveLengthCnt}
 		} else {
@@ -135,7 +136,7 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte, blocksize int,
 			_, _ = r.Read(readInstr[:])
 			i += instrumentDefaultLen // manuale incremento i
 			for (i+instrumentDefaultLen < songDecompressedSize) &&
-				(readInstr == instrumentDefault) &&
+				bytes.Equal(readInstr[:], instrumentDefault[:]) &&
 				(defInstrumentLengthCnt != 0xff) {
 
 				defInstrumentLengthCnt++
@@ -143,6 +144,8 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte, blocksize int,
 				i += instrumentDefaultLen // manuale incremento i
 			}
 			//Forse devo seekare uno indietro
+			_, _ = r.Seek(-int64(instrumentDefaultLen), io.SeekCurrent)
+			i -= instrumentDefaultLen
 
 			if defInstrumentLengthCnt > 0 {
 				nextEvent = []byte{specialActionByte, defaultInstrumentByte, defInstrumentLengthCnt}
@@ -169,6 +172,8 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte, blocksize int,
 						read3, _ := readByte(r)
 						i++ // manuale incremento i
 
+						_, _ = r.Seek(-3, io.SeekCurrent)
+
 						//TODO caso END
 						// TODO sto codice fa SCHIFO e non so nemmeno se è CORRETTO PORCODIO
 						if read1 == c && read2 == c && read3 == c {
@@ -180,31 +185,31 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte, blocksize int,
 							}
 							nextEvent = []byte{runLengthEncodingByte, c, cnt}
 						} else {
-							nextEvent = []byte{read3}
-							read3, _ = readByte(r)
-							i++ // manuale incremento i
+							// read3 deve incrementare proprio il valore del riferimento
+							nextEvent = []byte{read3 + 1}
+							//read3, _ = readByte(r)
+							//i++ // manuale incremento i
 						}
 					}
 
 				}
 			}
 
-			// blocksize o GLOBAL blocksize???
-			if curBlockSize+len(nextEvent)+2 >= blocksize {
+			if curBlockSize+len(nextEvent)+2 >= blockSize {
 				_ = writeByte(specialActionByte, w)
-				_ = writeByte(specialActionByte+currentBlock+1, w)
+				_ = writeByte(currentBlock+1, w)
 
 				curBlockSize += 2
 				// assert curblocksize <= blockSize
-				zeroes := make([]byte, curBlockSize-blocksize)
+				zeroes := make([]byte, blockSize-curBlockSize)
 				_, _ = w.Write(zeroes)
 
-				currentBlock++
+				currentBlock += 1
 				curBlockSize = 0
 
 				// Have we reached the maximum block count?
 				// If so, roll back
-				if currentBlock == byte(blockCount)+1 {
+				if currentBlock == byte(blockCnt)+1 {
 					pos, _ := w.Seek(0, io.SeekCurrent)
 					zeroes := make([]byte, pos-wStart)
 					_, _ = w.Write(zeroes)
@@ -215,6 +220,8 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte, blocksize int,
 				return 0
 			}
 		}
+
+		curBlockSize += len(nextEvent)
 	}
 	_ = writeByte(specialActionByte, w)
 	_ = writeByte(endOfFileByte, w)
