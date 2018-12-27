@@ -22,7 +22,7 @@ func readLsdsng(r io.ReadSeeker) (p Project) {
 	b := new(writerseeker.WriterSeeker)
 	decompress(r, b, nil)
 
-	p.song, _ = Read(b.BytesReader())
+	p.song, _ = Read(b.BytesReader(), p.version)
 
 	return p
 }

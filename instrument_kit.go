@@ -58,7 +58,7 @@ func (i *instrumentKit) clear() {
 	i.vibShape = vibTriangle
 }
 
-func (i *instrumentKit) read(in *instrument, r io.ReadSeeker) {
+func (i *instrumentKit) read(in *instrument, r io.ReadSeeker, version byte) {
 	var b byte
 
 	i.loop1 = kitLoopOff
@@ -94,7 +94,6 @@ func (i *instrumentKit) read(in *instrument, r io.ReadSeeker) {
 	in.automate = parseAutomate(b)
 	i.vibDirection = vibDirection(b & 1)
 
-	version := byte(1)
 	if version < 4 {
 		switch (b >> 1) & 3 {
 		case 0:

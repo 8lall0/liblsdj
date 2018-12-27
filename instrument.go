@@ -62,7 +62,7 @@ func (i *instrument) clearAsPulse() {
 	i.instrument.clear()
 }
 
-func (i *instrument) read(r io.ReadSeeker) {
+func (i *instrument) read(r io.ReadSeeker, version byte) {
 	i.insType, _ = readByte(r)
 
 	pos1, _ := r.Seek(0, io.SeekCurrent)
@@ -82,7 +82,7 @@ func (i *instrument) read(r io.ReadSeeker) {
 		panic("Strumento non conosciuto")
 	}
 
-	i.instrument.read(i, r)
+	i.instrument.read(i, r, version)
 
 	pos2, _ := r.Seek(0, io.SeekCurrent)
 

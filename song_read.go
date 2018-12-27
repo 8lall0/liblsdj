@@ -88,7 +88,7 @@ func (s *Song) readBank0(r io.ReadSeeker) {
 	}
 }
 
-func (s *Song) readBank1(r io.ReadSeeker) {
+func (s *Song) readBank1(r io.ReadSeeker, version byte) {
 	if _, err := io.ReadFull(r, s.reserved2000[:]); err != nil {
 		panic(err)
 	}
@@ -115,7 +115,7 @@ func (s *Song) readBank1(r io.ReadSeeker) {
 			if _, err := r.Seek(1, io.SeekCurrent); err != nil {
 				panic(err)
 			}
-			s.instruments[i].read(r)
+			s.instruments[i].read(r, version)
 		} else {
 			if _, err := r.Seek(16, io.SeekCurrent); err != nil {
 				panic(err)
@@ -298,7 +298,7 @@ func checkRb(r io.ReadSeeker, position int64) bool {
 	return rb[0] == 'r' && rb[1] == 'b'
 }
 
-func Read(r io.ReadSeeker) (Song, error) {
+func Read(r io.ReadSeeker, version byte) (Song, error) {
 	var s Song
 
 	var tableAllocTable [tableAllocTableSize]byte
@@ -389,7 +389,7 @@ func Read(r io.ReadSeeker) (Song, error) {
 	}
 
 	s.readBank0(r)
-	s.readBank1(r)
+	s.readBank1(r, version)
 	s.readBank2(r)
 	s.readBank3(r)
 
