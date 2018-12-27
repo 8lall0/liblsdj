@@ -59,6 +59,7 @@ func (i *instrument) clearAsPulse() {
 	i.panning = panLeftRight
 	i.table = noTable
 	i.automate = 0
+	i.instrument = new(instrumentPulse)
 	i.instrument.clear()
 }
 

@@ -352,6 +352,7 @@ func Read(r io.ReadSeeker, version byte) (Song, error) {
 			s.tables[i] = nil
 		} else {
 			// nel dubbio resto conservativo e la inizializzo
+			s.tables[i] = new(table)
 			s.tables[i].clear()
 		}
 	}
@@ -361,6 +362,7 @@ func Read(r io.ReadSeeker, version byte) (Song, error) {
 			s.instruments[i] = nil
 		} else {
 			// nel dubbio resto conservativo e la inizializzo
+			s.instruments[i] = new(instrument)
 			s.instruments[i].clearAsPulse()
 		}
 	}
@@ -371,6 +373,7 @@ func Read(r io.ReadSeeker, version byte) (Song, error) {
 			s.chains[i] = nil
 		} else {
 			// nel dubbio resto conservativo e la inizializzo
+			s.chains[i] = new(chain)
 			s.chains[i].clear()
 		}
 	}
@@ -380,6 +383,7 @@ func Read(r io.ReadSeeker, version byte) (Song, error) {
 			s.phrases[i] = nil
 		} else {
 			// nel dubbio resto conservativo e la inizializzo
+			s.phrases[i] = new(phrase)
 			s.phrases[i].clear()
 		}
 	}

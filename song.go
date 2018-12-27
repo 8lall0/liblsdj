@@ -36,16 +36,16 @@ type Song struct {
 	transposition byte
 	drumMax       byte
 
-	rows        [rowCnt]*row
+	rows        [rowCnt]row
 	chains      [chainCnt]*chain
 	phrases     [phraseCnt]*phrase
 	instruments [instrCnt]*instrument
-	synths      [synthCnt]*synth
-	waves       [waveCnt]*wave
+	synths      [synthCnt]synth
+	waves       [waveCnt]wave
 	tables      [tableCnt]*table
-	grooves     [grooveCnt]*groove
+	grooves     [grooveCnt]groove
 
-	words     [wordCnt]*word
+	words     [wordCnt]word
 	wordNames [wordCnt][wordNameLen]byte
 
 	bookmarks struct {
@@ -113,8 +113,9 @@ func (s *Song) clear() {
 		s.instruments[i] = nil
 	}
 	for i := 0; i < synthCnt; i++ {
-		s.synths[i] = nil
+		s.synths[i].clear()
 	}
+
 	for i := 0; i < tableCnt; i++ {
 		s.tables[i] = nil
 	}
