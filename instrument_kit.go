@@ -159,3 +159,73 @@ func (i *instrumentKit) read(in *instrument, r io.ReadSeeker) {
 
 	_, _ = r.Seek(2, io.SeekCurrent) // Bytes 14 and 15 are empty
 }
+
+func (i *instrumentKit) write(in *instrument, w io.WriteSeeker, version byte) {
+	var b byte
+
+	_ = writeByte(2, w)
+	_ = writeByte(createWaveVolumeByte(in.envelopeVolume), w)
+
+	// An advice: ternary operator sucks
+	if i.loop1 == kitLoopAttack {
+		b = 0x80
+	} else {
+		b = 0x0
+	}
+	if i.halfSpeed == 1 {
+		b = b | 0x40
+	} else {
+		b = b | 0x0
+	}
+	b = b | (i.kit1 & 0x3f)
+	_ = writeByte(b, w)
+
+	_ = writeByte(i.length1, w)
+	_ = writeByte(0xff, w)
+
+	if i.loop1 == kitLoopOn {
+		b = 0x40
+	} else {
+		b = 0x0
+	}
+
+	// Byte 5
+	if i.loop2 == kitLoopOn {
+		b = b | 0x40
+	} else {
+		b = b | 0x0
+	}
+	b = b | createAutomateByte(in.automate)
+
+	if version < 4 {
+		b = b | (byte(i.plVibSpeed)&3)<<1
+	} else {
+		switch i.plVibSpeed {
+		// plVibFast does nothing
+		case plVibTick:
+			b = b | 0x10
+		case plVibStep:
+			b = b | 0x80
+		}
+	}
+	_ = writeByte(b, w)
+
+	_ = writeByte(createTableByte(in.table), w)
+	_ = writeByte(createPanningByte(in.panning), w)
+	_ = writeByte(i.pitch, w)
+
+	if i.loop2 == kitLoopAttack {
+		b = 0x80
+	} else {
+		b = 0x0
+	}
+	b = b | (i.kit2 & 0x3f)
+	_ = writeByte(b, w)
+
+	_ = writeByte(createKitDistortionByte(i.distortion), w)
+	_ = writeByte(i.length2, w)
+	_ = writeByte(i.offset1, w)
+	_ = writeByte(i.offset2, w)
+	_ = writeByte(0xf3, w) // Byte 14 is empty
+	_ = writeByte(0, w)    // Byte 15 is empty
+}
