@@ -101,3 +101,20 @@ func (i *instrumentPulse) read(in *instrument, r io.ReadSeeker) {
 	i.fineTune = (b >> 2) & 0xf
 	_, _ = r.Seek(8, io.SeekCurrent)
 }
+
+func (i *instrumentPulse) write(in *instrument, w io.WriteSeeker) {
+	var b byte
+
+	b = 0
+
+	_ := writeByte(b, w)
+	_ := writeByte(in.envelopeVolume, w)
+	_ := writeByte(i.pulse2tune, w)
+
+	b = createLe
+	_ := writeByte(in.envelopeVolume, w)
+	_ := writeByte(in.envelopeVolume, w)
+	_ := writeByte(in.envelopeVolume, w)
+	_ := writeByte(in.envelopeVolume, w)
+
+}
