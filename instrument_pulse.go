@@ -102,19 +102,49 @@ func (i *instrumentPulse) read(in *instrument, r io.ReadSeeker) {
 	_, _ = r.Seek(8, io.SeekCurrent)
 }
 
-func (i *instrumentPulse) write(in *instrument, w io.WriteSeeker) {
+func (i *instrumentPulse) write(in *instrument, w io.WriteSeeker, version byte) {
 	var b byte
 
 	b = 0
 
-	_ := writeByte(b, w)
-	_ := writeByte(in.envelopeVolume, w)
-	_ := writeByte(i.pulse2tune, w)
+	_ = writeByte(b, w)
+	_ = writeByte(in.envelopeVolume, w)
+	_ = writeByte(i.pulse2tune, w)
 
-	b = createLe
-	_ := writeByte(in.envelopeVolume, w)
-	_ := writeByte(in.envelopeVolume, w)
-	_ := writeByte(in.envelopeVolume, w)
-	_ := writeByte(in.envelopeVolume, w)
+	_ = writeByte(createLengthByte(i.length), w)
+	_ = writeByte(i.sweep, w)
 
+	b = createDrumModeByte(i.drumMode, version)
+	b |= createTransposeByte(i.transpose, version)
+	b |= createAutomateByte(in.automate)
+	b |= createVibratoDirectionByte(i.vibDirection)
+
+	if version < 4 {
+		switch i.vibShape {
+		case vibSawtooth:
+			b |= 2
+		case vibSquare:
+			b |= 6
+		case vibTriangle:
+			if i.plVibSpeed != plVibFast {
+				b |= 4
+			}
+		}
+	} else {
+		b |= (byte(i.vibShape) & 3) << 1
+		if i.plVibSpeed == plVibTick {
+			b |= 0x10
+		} else if i.plVibSpeed == plVibStep {
+			b |= 0x80
+		}
+	}
+
+	_ = writeByte(b, w)
+	_ = writeByte(createTableByte(in.table), w)
+
+	b = createPulseWidthByte(i.pulseWidth) | ((byte(i.fineTune) & 0xf) << 2) | createPanningByte(in.panning)
+	_ = writeByte(b, w)
+
+	empty := []byte{0, 0, 0xD0, 0, 0, 0, 0xF3, 0}
+	_, _ = w.Write(empty)
 }

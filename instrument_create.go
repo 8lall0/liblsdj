@@ -40,7 +40,7 @@ func createDrumModeByte(drumMode byte, version byte) byte {
 	return 0x0
 }
 
-func createtransposeByte(transpose byte, version byte) byte {
+func createTransposeByte(transpose byte, version byte) byte {
 	if version < 3 {
 		return 0
 	}
