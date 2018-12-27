@@ -78,14 +78,14 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 	var chainAllocTable [chainAllocTableSize]byte
 	for i := 0; i < chainCnt; i++ {
 		if s.chains[i] != nil {
-			chainAllocTable[i/8] |= (1 << uint(i%8))
+			chainAllocTable[i/8] |= 1 << uint(i%8)
 		}
 	}
 
 	var phraseAllocTable [phraseAllocTableSize]byte
 	for i := 0; i < phraseCnt; i++ {
 		if s.phrases[i] != nil {
-			phraseAllocTable[i/8] |= (1 << uint(i%8))
+			phraseAllocTable[i/8] |= 1 << uint(i%8)
 		}
 	}
 
@@ -111,7 +111,7 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 
 	for i := 0; i < instrCnt; i++ {
 		if s.instruments[i] != nil {
-			// TODO: instrument write - aggiungi ad interfaccia
+			s.instruments[i].instrument.write(s.instruments[i], w, 0)
 		} else {
 			_, _ = w.Write(instrumentDefault[:])
 		}
@@ -167,27 +167,27 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 		s.synths[i].writeSoftSynthParams(w)
 	}
 
-	_ := writeByte(s.meta.workTime.hours, w)
-	_ := writeByte(s.meta.workTime.minutes, w)
+	_ = writeByte(s.meta.workTime.hours, w)
+	_ = writeByte(s.meta.workTime.minutes, w)
 
-	_ := writeByte(s.tempo, w)
-	_ := writeByte(s.transposition, w)
+	_ = writeByte(s.tempo, w)
+	_ = writeByte(s.transposition, w)
 
-	_ := writeByte(s.meta.totalTime.days, w)
-	_ := writeByte(s.meta.totalTime.hours, w)
-	_ := writeByte(s.meta.totalTime.minutes, w)
+	_ = writeByte(s.meta.totalTime.days, w)
+	_ = writeByte(s.meta.totalTime.hours, w)
+	_ = writeByte(s.meta.totalTime.minutes, w)
 
-	_ := writeByte(s.reserved3fb9, w)
-	_ := writeByte(s.meta.keyDelay, w)
-	_ := writeByte(s.meta.keyRepeat, w)
-	_ := writeByte(s.meta.font, w)
-	_ := writeByte(s.meta.sync, w)
-	_ := writeByte(s.meta.colorSet, w)
-	_ := writeByte(s.reserved3fbf, w)
-	_ := writeByte(s.meta.clone, w)
-	_ := writeByte(s.meta.fileChangedFlag, w)
-	_ := writeByte(s.meta.powerSave, w)
-	_ := writeByte(s.meta.preListen, w)
+	_ = writeByte(s.reserved3fb9, w)
+	_ = writeByte(s.meta.keyDelay, w)
+	_ = writeByte(s.meta.keyRepeat, w)
+	_ = writeByte(s.meta.font, w)
+	_ = writeByte(s.meta.sync, w)
+	_ = writeByte(s.meta.colorSet, w)
+	_ = writeByte(s.reserved3fbf, w)
+	_ = writeByte(s.meta.clone, w)
+	_ = writeByte(s.meta.fileChangedFlag, w)
+	_ = writeByte(s.meta.powerSave, w)
+	_ = writeByte(s.meta.preListen, w)
 
 	var waveSynthOverwriteLocks [2]byte
 	for i := 0; i < synthCnt; i++ {
@@ -197,7 +197,7 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 	}
 	_, _ = w.Write(waveSynthOverwriteLocks[:])
 	_, _ = w.Write(s.reserved3fc6[:])
-	_ := writeByte(s.drumMax, w)
+	_ = writeByte(s.drumMax, w)
 	_, _ = w.Write(s.reserved3fd1[:])
 }
 
@@ -205,7 +205,7 @@ func (s *Song) writeBank2(w io.WriteSeeker) {
 	for i := 0; i < phraseCnt; i++ {
 		if s.phrases[i] != nil {
 			for j := 0; j < phraseLen; j++ {
-				_ := writeByte(s.phrases[i].commands[j].command, w)
+				_ = writeByte(s.phrases[i].commands[j].command, w)
 			}
 		} else {
 			_, _ = w.Write(phraseLenZero[:])
@@ -215,7 +215,7 @@ func (s *Song) writeBank2(w io.WriteSeeker) {
 	for i := 0; i < phraseCnt; i++ {
 		if s.phrases[i] != nil {
 			for j := 0; j < phraseLen; j++ {
-				_ := writeByte(s.phrases[i].commands[j].value, w)
+				_ = writeByte(s.phrases[i].commands[j].value, w)
 			}
 		} else {
 			_, _ = w.Write(phraseLenZero[:])
@@ -240,5 +240,5 @@ func (s *Song) writeBank3(w io.WriteSeeker) {
 
 	_, _ = w.Write([]byte("rb"))
 	_, _ = w.Write(s.reserved7ff2[:])
-	_ := writeByte(s.formatVersion, w)
+	_ = writeByte(s.formatVersion, w)
 }
