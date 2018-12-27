@@ -1,7 +1,6 @@
 package liblsdj
 
 import (
-	"fmt"
 	"io"
 )
 
@@ -87,6 +86,9 @@ func (i *instrument) read(r io.ReadSeeker, version byte) {
 
 	pos2, _ := r.Seek(0, io.SeekCurrent)
 
-	fmt.Println(pos2 - pos1) // TODO dovrebbe fare 15, controlla analogo di assert per golang
+	// TODO ritorna errore per ste cagate
+	if pos2-pos1 != 15 {
+		panic("Non è 15")
+	}
 
 }

@@ -13,16 +13,14 @@ type Project struct {
 	song    Song
 }
 
-// Forse è qui che inizia il writer
-func readLsdsng(r io.ReadSeeker) (p Project) {
+func ReadLsdsng(r io.ReadSeeker) (p Project) {
 	_, _ = io.ReadFull(r, p.name[:])
 	p.version, _ = readByte(r)
 
-	// Decidi dove salvare questo writeseeker
 	b := new(writerseeker.WriterSeeker)
 	decompress(r, b, nil)
 
-	p.song, _ = Read(b.BytesReader(), p.version)
+	p.song, _ = ReadSong(b.BytesReader(), p.version)
 
 	return p
 }

@@ -74,23 +74,19 @@ func decompress(r io.ReadSeeker, w io.WriteSeeker, block1position *int64) {
 
 	for loop := true; loop; {
 		b, _ = readByte(r)
-		fmt.Println(b)
-
 		switch b {
 		case runLengthEncodingByte:
-			fmt.Println("RLE")
 			decompressRLEByte(r, w)
 		case specialActionByte:
-			fmt.Println("SA")
 			decompressSAByte(r, w, &currentBlockPos, block1position, &loop)
 		default:
-			fmt.Println("DEF")
 			_ = writeByte(b, w)
 		}
 	}
 
 	wEnd, _ := w.Seek(0, io.SeekCurrent)
 	if (wEnd - wStart) != songDecompressedSize {
+		// TODO Questo è un errore se avviene!
 		fmt.Println("Decompressed size: ", wEnd-wStart, " Normal size: ", songDecompressedSize)
 	}
 
