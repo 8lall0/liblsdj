@@ -91,26 +91,26 @@ func decompress(r io.ReadSeeker, w io.WriteSeeker, block1position *int64) {
 
 }
 
-func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
-	if startBlock == byte(blockCnt+1) {
+func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock int) int {
+	if startBlock == blockCnt+1 {
 		return 0
 	}
-	var b byte
-	var readWave [waveLen]byte
-	var readInstr [instrumentDefaultLen]byte
+	var sel byte
+
+	curBlock := startBlock
+	curBlockSize := 0
 
 	wStart, _ := w.Seek(0, io.SeekCurrent)
-	//rStart, _ := r.Seek(0, io.SeekCurrent)
-	rEnd, _ := r.Seek(0, io.SeekEnd)
+	rStart, _ := r.Seek(0, io.SeekCurrent)
+	rEnd := rStart + songDecompressedSize
 
-	curBlockSize := 0
-	currentBlock := startBlock
-
-	for pos, _ := r.Seek(0, io.SeekCurrent); pos < rEnd; pos, _ = r.Seek(0, io.SeekCurrent) {
+	// TODO controlla sto cazzo di loop
+	for posRead, _ := r.Seek(0, io.SeekCurrent); posRead < rEnd; posRead, _ = r.Seek(0, io.SeekCurrent) {
 		nextEvent := []byte{0, 0, 0}
 
 		// Are we reading a default wave? If so, we can compress these!
 		var defWaveLengthCnt byte
+		var readWave [waveLen]byte
 		for posWave, _ := r.Seek(0, io.SeekCurrent); (posWave+waveLen < rEnd) && (defWaveLengthCnt != 0xff); posWave, _ = r.Seek(0, io.SeekCurrent) {
 			_, _ = r.Read(readWave[:])
 			if readWave == defaultWave {
@@ -126,7 +126,8 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 		} else {
 			// Are we reading a default instrument? If so, we can compress these!
 			var defInstrumentLengthCnt byte
-			for pos, _ := r.Seek(0, io.SeekCurrent); (pos+instrumentDefaultLen < rEnd) && (defInstrumentLengthCnt != 0xff); pos, _ = r.Seek(0, io.SeekCurrent) {
+			var readInstr [instrumentDefaultLen]byte
+			for posInstr, _ := r.Seek(0, io.SeekCurrent); (posInstr+instrumentDefaultLen < rEnd) && (defInstrumentLengthCnt != 0xff); posInstr, _ = r.Seek(0, io.SeekCurrent) {
 				_, _ = r.Read(readInstr[:])
 				if readInstr == instrumentDefault {
 					defInstrumentLengthCnt++
@@ -138,33 +139,34 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 
 			if defInstrumentLengthCnt > 0 {
 				nextEvent = []byte{specialActionByte, defaultInstrumentByte, defInstrumentLengthCnt}
-				fmt.Println(defInstrumentLengthCnt)
 			} else {
 				// Not a default wave, time to do "normal" compression
-				b, _ = readByte(r)
-				switch b {
+				//TODO INGHIPPO
+
+				sel, _ = readByte(r)
+				switch sel {
 				case runLengthEncodingByte:
 					nextEvent = []byte{runLengthEncodingByte, runLengthEncodingByte}
+					sel, _ = readByte(r)
 				case specialActionByte:
 					nextEvent = []byte{specialActionByte, specialActionByte}
+					sel, _ = readByte(r)
 				default:
-					c := b
-
 					// See if we can do run-length encoding
-					_, _ = r.Seek(-1, io.SeekCurrent) //write at the same place
-					if pos, _ := r.Seek(0, io.SeekCurrent); pos+3 < rEnd {
+					posRun, _ := r.Seek(0, io.SeekCurrent)
+					if posRun+3 < rEnd {
 						read1, _ := readByte(r)
 						read2, _ := readByte(r)
 						read3, _ := readByte(r)
 						_, _ = r.Seek(-3, io.SeekCurrent)
 
 						// TODO sto codice fa SCHIFO e non so nemmeno se è CORRETTO PORCODIO
-						if read1 == c && read2 == c && read3 == c {
+						if read1 == sel && read2 == sel && read3 == sel {
 							var cnt byte
-							for ; (read3 == c) && (cnt != 0xff); cnt++ {
+							for ; (read3 == sel) && (cnt != 0xff); cnt++ {
 								read3, _ = readByte(r)
 							}
-							nextEvent = []byte{runLengthEncodingByte, c, cnt}
+							nextEvent = []byte{runLengthEncodingByte, sel, cnt}
 						}
 					} else {
 						tmp, _ := readByte(r)
@@ -179,23 +181,23 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 		if curBlockSize+len(nextEvent)+2 >= blockSize {
 			// Write the "next block" command
 			_ = writeByte(specialActionByte, w)
-			_ = writeByte(currentBlock+1, w)
+			_ = writeByte(byte(curBlock)+1, w)
 
 			curBlockSize += 2
 			// assert curblocksize <= blockSize
 			zeroes := make([]byte, blockSize-curBlockSize)
 			_, _ = w.Write(zeroes)
 
-			currentBlock += 1
+			curBlock += 1
 			curBlockSize = 0
 
 			// Have we reached the maximum block count?
 			// If so, roll back
-			if currentBlock == byte(blockCnt)+1 {
-				pos, _ := w.Seek(0, io.SeekCurrent)
+			if curBlock == blockCnt+1 {
+				posRollback, _ := w.Seek(0, io.SeekCurrent)
 				_, _ = w.Seek(wStart, io.SeekStart)
 
-				zeroes := make([]byte, pos-wStart)
+				zeroes := make([]byte, posRollback-wStart)
 				_, _ = w.Write(zeroes)
 
 				// seek back
@@ -213,5 +215,5 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 	zeroes := make([]byte, blockSize-curBlockSize)
 	_, _ = w.Write(zeroes)
 
-	return int(currentBlock - startBlock + 1)
+	return int(curBlock - startBlock + 1)
 }
