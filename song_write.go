@@ -11,7 +11,6 @@ func (s *Song) writeBank0(w io.WriteSeeker) {
 		}
 	}
 
-	// TODO controlla bookmarks
 	_, _ = w.Write(s.bookmarks.pulse1[:])
 	_, _ = w.Write(s.bookmarks.pulse2[:])
 	_, _ = w.Write(s.bookmarks.wave[:])
@@ -24,10 +23,7 @@ func (s *Song) writeBank0(w io.WriteSeeker) {
 	}
 
 	for i := 0; i < len(s.rows); i++ {
-		_ = writeByte(s.rows[i].pulse1, w)
-		_ = writeByte(s.rows[i].pulse2, w)
-		_ = writeByte(s.rows[i].wave, w)
-		_ = writeByte(s.rows[i].noise, w)
+		s.rows[i].write(w)
 	}
 
 	for i := 0; i < tableCnt; i++ {
@@ -39,8 +35,7 @@ func (s *Song) writeBank0(w io.WriteSeeker) {
 	}
 
 	for i := 0; i < wordCnt; i++ {
-		_, _ = w.Write(s.words[i].allophones[:])
-		_, _ = w.Write(s.words[i].lenghts[:])
+		s.words[i].write(w)
 	}
 
 	for i := 0; i < len(s.wordNames); i++ {
@@ -60,7 +55,7 @@ func (s *Song) writeBank0(w io.WriteSeeker) {
 	_, _ = w.Write(s.reserved1fba[:])
 }
 
-func (s *Song) writeBank1(w io.WriteSeeker) {
+func (s *Song) writeBank1(w io.WriteSeeker, version byte) {
 	var instrAllocTable [instrAllocTableSize]byte
 	for i := 0; i < instrCnt; i++ {
 		if s.instruments[i] != nil {
@@ -111,7 +106,7 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 
 	for i := 0; i < instrCnt; i++ {
 		if s.instruments[i] != nil {
-			s.instruments[i].instrument.write(s.instruments[i], w, 0)
+			s.instruments[i].instrument.write(s.instruments[i], w, version)
 		} else {
 			_, _ = w.Write(instrumentDefault[:])
 		}
@@ -125,8 +120,7 @@ func (s *Song) writeBank1(w io.WriteSeeker) {
 		}
 	}
 
-	// Command1-2 è ripetuto due volte
-
+	// Command1-2 times 2
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
 			_, _ = w.Write(s.tables[i].getCommand1())
@@ -243,9 +237,9 @@ func (s *Song) writeBank3(w io.WriteSeeker) {
 	_ = writeByte(s.formatVersion, w)
 }
 
-func WriteSong(w io.WriteSeeker, s *Song) {
+func WriteSong(w io.WriteSeeker, s *Song, version byte) {
 	s.writeBank0(w)
-	s.writeBank1(w)
+	s.writeBank1(w, version)
 	s.writeBank2(w)
 	s.writeBank3(w)
 }

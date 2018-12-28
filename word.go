@@ -1,5 +1,7 @@
 package liblsdj
 
+import "io"
+
 const (
 	wordLen     = 16
 	wordNameLen = 4
@@ -15,4 +17,9 @@ func (w *word) clear() {
 		w.allophones[i] = 0
 		w.lenghts[i] = 0
 	}
+}
+
+func (wo *word) write(w io.WriteSeeker) {
+	_, _ = w.Write(wo.allophones[:])
+	_, _ = w.Write(wo.lenghts[:])
 }

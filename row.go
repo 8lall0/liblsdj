@@ -18,7 +18,14 @@ func (ro *row) clear() {
 	ro.noise = 0xFF
 }
 
-func (ro *row) write(r io.ReadSeeker) {
+func (ro *row) write(w io.WriteSeeker) {
+	_ = writeByte(ro.pulse1, w)
+	_ = writeByte(ro.pulse2, w)
+	_ = writeByte(ro.wave, w)
+	_ = writeByte(ro.noise, w)
+}
+
+func (ro *row) read(r io.ReadSeeker) {
 	ro.pulse1, _ = readByte(r)
 	ro.pulse2, _ = readByte(r)
 	ro.wave, _ = readByte(r)

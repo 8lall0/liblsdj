@@ -96,31 +96,27 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 		return 0
 	}
 	var b byte
-	wStart, _ := w.Seek(0, io.SeekCurrent)
+	var readWave [waveLen]byte
+	var readInstr [instrumentDefaultLen]byte
 
-	rStart, _ := r.Seek(0, io.SeekCurrent)
-	rEnd := rStart + songDecompressedSize
+	wStart, _ := w.Seek(0, io.SeekCurrent)
+	//rStart, _ := r.Seek(0, io.SeekCurrent)
+	rEnd, _ := r.Seek(0, io.SeekEnd)
 
 	curBlockSize := 0
 	currentBlock := startBlock
 
 	for pos, _ := r.Seek(0, io.SeekCurrent); pos < rEnd; pos, _ = r.Seek(0, io.SeekCurrent) {
-		var readWave [waveLen]byte
-		var readInstr [instrumentDefaultLen]byte
-
 		nextEvent := []byte{0, 0, 0}
 
 		// Are we reading a default wave? If so, we can compress these!
 		var defWaveLengthCnt byte
-		for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < rEnd) && (defWaveLengthCnt != 0xff); pos, _ = r.Seek(0, io.SeekCurrent) {
-			if defWaveLengthCnt == 0 {
-				_, _ = r.Read(readWave[:])
-			}
+		for posWave, _ := r.Seek(0, io.SeekCurrent); (posWave+waveLen < rEnd) && (defWaveLengthCnt != 0xff); posWave, _ = r.Seek(0, io.SeekCurrent) {
+			_, _ = r.Read(readWave[:])
 			if readWave == defaultWave {
 				defWaveLengthCnt++
-				_, _ = r.Read(readWave[:])
 			} else {
-				_, _ = r.Seek(-int64(defWaveLengthCnt), io.SeekCurrent)
+				_, _ = r.Seek(-waveLen, io.SeekCurrent)
 				break
 			}
 		}
@@ -130,21 +126,19 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 		} else {
 			// Are we reading a default instrument? If so, we can compress these!
 			var defInstrumentLengthCnt byte
-			for pos, _ := r.Seek(0, io.SeekCurrent); (pos+waveLen < rEnd) && (defInstrumentLengthCnt != 0xff); pos, _ = r.Seek(0, io.SeekCurrent) {
-				if defInstrumentLengthCnt == 0 {
-					_, _ = r.Read(readInstr[:])
-				}
+			for pos, _ := r.Seek(0, io.SeekCurrent); (pos+instrumentDefaultLen < rEnd) && (defInstrumentLengthCnt != 0xff); pos, _ = r.Seek(0, io.SeekCurrent) {
+				_, _ = r.Read(readInstr[:])
 				if readInstr == instrumentDefault {
 					defInstrumentLengthCnt++
-					_, _ = r.Read(readInstr[:])
 				} else {
-					_, _ = r.Seek(-int64(instrumentDefaultLen), io.SeekCurrent)
+					_, _ = r.Seek(-instrumentDefaultLen, io.SeekCurrent)
 					break
 				}
 			}
 
 			if defInstrumentLengthCnt > 0 {
 				nextEvent = []byte{specialActionByte, defaultInstrumentByte, defInstrumentLengthCnt}
+				fmt.Println(defInstrumentLengthCnt)
 			} else {
 				// Not a default wave, time to do "normal" compression
 				b, _ = readByte(r)
@@ -157,7 +151,7 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 					c := b
 
 					// See if we can do run-length encoding
-					_, _ = r.Seek(-1, io.SeekCurrent) //read at the same place
+					_, _ = r.Seek(-1, io.SeekCurrent) //write at the same place
 					if pos, _ := r.Seek(0, io.SeekCurrent); pos+3 < rEnd {
 						read1, _ := readByte(r)
 						read2, _ := readByte(r)
@@ -211,7 +205,6 @@ func compress(r io.ReadSeeker, w io.WriteSeeker, startBlock byte) int {
 		}
 		_, _ = w.Write(nextEvent)
 		curBlockSize += len(nextEvent)
-		fmt.Println(curBlockSize)
 	}
 
 	_ = writeByte(specialActionByte, w)

@@ -27,7 +27,7 @@ func ReadLsdsng(r io.ReadSeeker) (p Project) {
 }
 
 func WriteLsdsng(w io.WriteSeeker, p Project) {
-	// controlla se c'è la canzona
+	// TODO controlla se c'è la canzona
 	// if song == null
 	// if name
 	// if version
@@ -42,8 +42,6 @@ func WriteLsdsng(w io.WriteSeeker, p Project) {
 	b := new(writerseeker.WriterSeeker)
 	_, _ = b.Write(tmp)
 	_, _ = b.Seek(0, io.SeekStart)
-	WriteSong(b, p.song)
-	asd := compress(b.BytesReader(), w, 1)
-
-	fmt.Println(asd)
+	WriteSong(b, p.song, p.version)
+	fmt.Println(compress(b.BytesReader(), w, 1))
 }

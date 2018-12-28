@@ -39,7 +39,7 @@ func (s *Song) readBank0(r io.ReadSeeker) {
 		}
 	}
 	for i := 0; i < rowCnt; i++ {
-		s.rows[i].write(r)
+		s.rows[i].read(r)
 	}
 
 	for i := 0; i < tableCnt; i++ {

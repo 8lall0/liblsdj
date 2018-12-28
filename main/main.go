@@ -22,5 +22,4 @@ func main() {
 	}
 	liblsdj.WriteLsdsng(wr, pro)
 	_ = wr.Close()
-
 }
