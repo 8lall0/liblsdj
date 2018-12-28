@@ -10,6 +10,7 @@ func readByte(r io.ReadSeeker) (b byte, err error) {
 	if err == nil {
 		b = p[0]
 	}
+
 	return
 }
 
