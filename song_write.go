@@ -38,7 +38,7 @@ func (s *Song) writeBank0(w io.WriteSeeker) {
 		s.words[i].write(w)
 	}
 
-	for i := 0; i < len(s.wordNames); i++ {
+	for i := 0; i < wordCnt; i++ {
 		_, _ = w.Write(s.wordNames[i][:])
 	}
 
@@ -55,7 +55,7 @@ func (s *Song) writeBank0(w io.WriteSeeker) {
 	_, _ = w.Write(s.reserved1fba[:])
 }
 
-func (s *Song) writeBank1(w io.WriteSeeker, version byte) {
+func (s *Song) writeBank1(w io.WriteSeeker) {
 	var instrAllocTable [instrAllocTableSize]byte
 	for i := 0; i < instrCnt; i++ {
 		if s.instruments[i] != nil {
@@ -106,7 +106,7 @@ func (s *Song) writeBank1(w io.WriteSeeker, version byte) {
 
 	for i := 0; i < instrCnt; i++ {
 		if s.instruments[i] != nil {
-			s.instruments[i].instrument.write(s.instruments[i], w, version)
+			s.instruments[i].instrument.write(s.instruments[i], w, s.formatVersion)
 		} else {
 			_, _ = w.Write(instrumentDefault[:])
 		}
@@ -120,10 +120,12 @@ func (s *Song) writeBank1(w io.WriteSeeker, version byte) {
 		}
 	}
 
-	// Command1-2 times 2
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
-			_, _ = w.Write(s.tables[i].getCommand1())
+			for j := 0; j < tableLen; j++ {
+				_ = writeByte(s.tables[i].commands1[j].command, w)
+			}
+
 		} else {
 			_, _ = w.Write(tableLengthZero[:])
 		}
@@ -131,7 +133,10 @@ func (s *Song) writeBank1(w io.WriteSeeker, version byte) {
 
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
-			_, _ = w.Write(s.tables[i].getCommand1())
+			for j := 0; j < tableLen; j++ {
+				_ = writeByte(s.tables[i].commands1[j].value, w)
+			}
+
 		} else {
 			_, _ = w.Write(tableLengthZero[:])
 		}
@@ -139,7 +144,10 @@ func (s *Song) writeBank1(w io.WriteSeeker, version byte) {
 
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
-			_, _ = w.Write(s.tables[i].getCommand2())
+			for j := 0; j < tableLen; j++ {
+				_ = writeByte(s.tables[i].commands2[j].command, w)
+			}
+
 		} else {
 			_, _ = w.Write(tableLengthZero[:])
 		}
@@ -147,7 +155,10 @@ func (s *Song) writeBank1(w io.WriteSeeker, version byte) {
 
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
-			_, _ = w.Write(s.tables[i].getCommand2())
+			for j := 0; j < tableLen; j++ {
+				_ = writeByte(s.tables[i].commands2[j].value, w)
+			}
+
 		} else {
 			_, _ = w.Write(tableLengthZero[:])
 		}
@@ -190,6 +201,7 @@ func (s *Song) writeBank1(w io.WriteSeeker, version byte) {
 		}
 	}
 	_, _ = w.Write(waveSynthOverwriteLocks[:])
+
 	_, _ = w.Write(s.reserved3fc6[:])
 	_ = writeByte(s.drumMax, w)
 	_, _ = w.Write(s.reserved3fd1[:])
@@ -233,13 +245,14 @@ func (s *Song) writeBank3(w io.WriteSeeker) {
 	}
 
 	_, _ = w.Write([]byte("rb"))
+
 	_, _ = w.Write(s.reserved7ff2[:])
 	_ = writeByte(s.formatVersion, w)
 }
 
-func WriteSong(w io.WriteSeeker, s *Song, version byte) {
+func WriteSong(w io.WriteSeeker, s *Song) {
 	s.writeBank0(w)
-	s.writeBank1(w, version)
+	s.writeBank1(w)
 	s.writeBank2(w)
 	s.writeBank3(w)
 }
