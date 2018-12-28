@@ -1,7 +1,5 @@
 package liblsdj
 
-import "io"
-
 const tableLen = 16
 
 type table struct {
@@ -32,10 +30,4 @@ func (t *table) getCommand2() (out []byte) {
 		out = append(out, t.commands2[i].get()...)
 	}
 	return out
-}
-
-func (t *table) writeVolume(r io.ReadSeeker) {
-	if _, err := io.ReadFull(r, t.volumes[:]); err != nil {
-		panic(err)
-	}
 }

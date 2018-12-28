@@ -221,7 +221,7 @@ func (s *Song) writeBank2(w io.WriteSeeker) {
 
 func (s *Song) writeBank3(w io.WriteSeeker) {
 	for i := 0; i < waveCnt; i++ {
-		_, _ = w.Write(s.waves[i].data[:])
+		_, _ = w.Write(s.waves[i][:])
 	}
 
 	for i := 0; i < phraseCnt; i++ {

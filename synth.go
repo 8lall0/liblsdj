@@ -44,7 +44,7 @@ type synth struct {
 
 	reserved [2]byte
 
-	overwritten byte
+	overwritten byte // 0 if false, 1 if true
 }
 
 func (s *synth) clear() {

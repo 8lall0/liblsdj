@@ -2,29 +2,31 @@ package liblsdj
 
 import "io"
 
-const commandNone = 0x00
-const commandA = 0x01
-const commandC = 0x02
-const commandD = 0x03
-const commandE = 0x04
-const commandF = 0x05
-const commandG = 0x06
-const commandH = 0x07
-const commandK = 0x08
-const commandL = 0x09
-const commandM = 0x0a
-const commandO = 0x0b
-const commandP = 0x0c
-const commandR = 0x0d
-const commandS = 0x0e
-const commandT = 0x0f
-const commandV = 0x10
-const commandW = 0x11
-const commandZ = 0x12
-const commandArduinoboyN = 0x13
-const commandArduinoboyX = 0x14
-const commandArduinoboyQ = 0x15
-const commandArduinoboyY = 0x16
+const (
+	commandNone        = 0x00
+	commandA           = 0x01
+	commandC           = 0x02
+	commandD           = 0x03
+	commandE           = 0x04
+	commandF           = 0x05
+	commandG           = 0x06
+	commandH           = 0x07
+	commandK           = 0x08
+	commandL           = 0x09
+	commandM           = 0x0a
+	commandO           = 0x0b
+	commandP           = 0x0c
+	commandR           = 0x0d
+	commandS           = 0x0e
+	commandT           = 0x0f
+	commandV           = 0x10
+	commandW           = 0x11
+	commandZ           = 0x12
+	commandArduinoboyN = 0x13
+	commandArduinoboyX = 0x14
+	commandArduinoboyQ = 0x15
+	commandArduinoboyY = 0x16
+)
 
 type command struct {
 	command byte
@@ -37,7 +39,6 @@ func (c *command) clear() {
 }
 
 func (c *command) write(r io.ReadSeeker) {
-	// TODO errori
 	c.command, _ = readByte(r)
 	c.value, _ = readByte(r)
 }
