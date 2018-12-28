@@ -20,7 +20,6 @@ func ReadLsdsng(r io.ReadSeeker) (p Project) {
 
 	b := new(writerseeker.WriterSeeker)
 	decompress(r, b, nil)
-
 	p.song, _ = ReadSong(b.BytesReader(), p.version)
 
 	return p
@@ -42,6 +41,6 @@ func WriteLsdsng(w io.WriteSeeker, p Project) {
 	b := new(writerseeker.WriterSeeker)
 	_, _ = b.Write(tmp)
 	_, _ = b.Seek(0, io.SeekStart)
-	WriteSong(b, p.song, p.version)
+	WriteSong(b, p.song)
 	fmt.Println(compress(b.BytesReader(), w, 1))
 }

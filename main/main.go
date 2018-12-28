@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	f, err := os.Open("A.Day.With.You.lsdsng")
+	f, err := os.Open("test.lsdsng")
 	if err != nil {
 		fmt.Println("Errore")
 		return
@@ -15,7 +15,7 @@ func main() {
 	pro := liblsdj.ReadLsdsng(f)
 	_ = f.Close()
 
-	wr, err := os.Create("test.lsdsng")
+	wr, err := os.Create("test2.lsdsng")
 	if err != nil {
 		fmt.Println("Errore")
 		return
