@@ -44,7 +44,9 @@ func (s *Song) readBank0(r io.ReadSeeker) {
 
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
-			s.tables[i].writeVolume(r)
+			if _, err := io.ReadFull(r, s.tables[i].volumes[:]); err != nil {
+				panic(err)
+			}
 		} else {
 			if _, err := r.Seek(tableLen, io.SeekCurrent); err != nil {
 				panic(err)
@@ -109,12 +111,20 @@ func (s *Song) readBank1(r io.ReadSeeker, version byte) {
 		}
 	}
 
-	for i := 0; i < instrCnt; i++ {
-		if s.instruments[i] != nil {
-			// Instrument type
-			if _, err := r.Seek(1, io.SeekCurrent); err != nil {
+	for i := 0; i < chainCnt; i++ {
+		if s.chains[i] != nil {
+			if _, err := io.ReadFull(r, s.chains[i].transpositions[:]); err != nil {
 				panic(err)
 			}
+		} else {
+			if _, err := r.Seek(chainLen, io.SeekCurrent); err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	for i := 0; i < instrCnt; i++ {
+		if s.instruments[i] != nil {
 			s.instruments[i].read(r, version)
 		} else {
 			if _, err := r.Seek(16, io.SeekCurrent); err != nil {
@@ -135,10 +145,10 @@ func (s *Song) readBank1(r io.ReadSeeker, version byte) {
 		}
 	}
 
+	// Twice command1
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
 			for j := 0; j < tableLen; j++ {
-				// TODO errori
 				s.tables[i].commands1[j].command, _ = readByte(r)
 			}
 		} else {
@@ -151,7 +161,6 @@ func (s *Song) readBank1(r io.ReadSeeker, version byte) {
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
 			for j := 0; j < tableLen; j++ {
-				// TODO errori
 				s.tables[i].commands1[j].command, _ = readByte(r)
 			}
 		} else {
@@ -161,10 +170,10 @@ func (s *Song) readBank1(r io.ReadSeeker, version byte) {
 		}
 	}
 
+	// Twice command2
 	for i := 0; i < tableCnt; i++ {
 		if s.tables[i] != nil {
 			for j := 0; j < tableLen; j++ {
-				// TODO errori
 				s.tables[i].commands2[j].command, _ = readByte(r)
 			}
 		} else {
@@ -173,6 +182,19 @@ func (s *Song) readBank1(r io.ReadSeeker, version byte) {
 			}
 		}
 	}
+
+	for i := 0; i < tableCnt; i++ {
+		if s.tables[i] != nil {
+			for j := 0; j < tableLen; j++ {
+				s.tables[i].commands2[j].command, _ = readByte(r)
+			}
+		} else {
+			if _, err := r.Seek(tableLen, io.SeekCurrent); err != nil {
+				panic(err)
+			}
+		}
+	}
+
 	//RB
 	if _, err := r.Seek(2, io.SeekCurrent); err != nil {
 		panic(err)
@@ -208,9 +230,9 @@ func (s *Song) readBank1(r io.ReadSeeker, version byte) {
 	if _, err := io.ReadFull(r, waveSynthOverwriteLocks[:]); err != nil {
 		panic(err)
 	}
-	// TODO: check
+
 	for i := 0; i < synthCnt; i++ {
-		s.synths[i].overwritten = (byte(waveSynthOverwriteLocks[1-(i/8)]) >> uint(i%8)) & 1
+		s.synths[i].overwritten = ((waveSynthOverwriteLocks[1-(i/8)]) >> uint(i%8)) & 1
 	}
 
 	if _, err := io.ReadFull(r, s.reserved3fc6[:]); err != nil {
@@ -255,7 +277,7 @@ func (s *Song) readBank2(r io.ReadSeeker) {
 
 func (s *Song) readBank3(r io.ReadSeeker) {
 	for i := 0; i < waveCnt; i++ {
-		if _, err := io.ReadFull(r, s.waves[i].data[:]); err != nil {
+		if _, err := io.ReadFull(r, s.waves[i][:]); err != nil {
 			panic(err)
 		}
 	}
@@ -279,7 +301,7 @@ func (s *Song) readBank3(r io.ReadSeeker) {
 	if _, err := io.ReadFull(r, s.reserved7ff2[:]); err != nil {
 		panic(err)
 	}
-	//version
+	// Already read the version number
 	if _, err := r.Seek(1, io.SeekCurrent); err != nil {
 		panic(err)
 	}
@@ -350,7 +372,6 @@ func ReadSong(r io.ReadSeeker, version byte) (s *Song, err error) {
 		if tableAllocTable[i] == 0 {
 			s.tables[i] = nil
 		} else {
-			// nel dubbio resto conservativo e la inizializzo
 			s.tables[i] = new(table)
 			s.tables[i].clear()
 		}
@@ -360,28 +381,24 @@ func ReadSong(r io.ReadSeeker, version byte) (s *Song, err error) {
 		if instrAllocTable[i] == 0 {
 			s.instruments[i] = nil
 		} else {
-			// nel dubbio resto conservativo e la inizializzo
 			s.instruments[i] = new(instrument)
 			s.instruments[i].clearAsPulse()
 		}
 	}
 
-	// Controlla condizioni
 	for i := 0; i < chainAllocTableSize; i++ {
-		if (byte(chainAllocTable[i/8])>>uint(i%8))&1 == 0 {
+		if (chainAllocTable[i/8]>>uint(i%8))&1 == 0 {
 			s.chains[i] = nil
 		} else {
-			// nel dubbio resto conservativo e la inizializzo
 			s.chains[i] = new(chain)
 			s.chains[i].clear()
 		}
 	}
 
 	for i := 0; i < phraseAllocTableSize; i++ {
-		if (byte(phraseAllocTable[i/8])>>uint(i%8))&1 == 0 {
+		if (phraseAllocTable[i/8]>>uint(i%8))&1 == 0 {
 			s.phrases[i] = nil
 		} else {
-			// nel dubbio resto conservativo e la inizializzo
 			s.phrases[i] = new(phrase)
 			s.phrases[i].clear()
 		}
