@@ -45,7 +45,7 @@ func main() {
 	}
 
 	docco := make([]byte, 0x8000)
-	dec.Read(docco)
+	_, _ = dec.Read(docco)
 
 	song := new(liblsdj.Song)
 	if err := song.Init(docco); err != nil {

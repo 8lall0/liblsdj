@@ -30,7 +30,7 @@ type Song struct {
 	Table1 Tables
 	Table2 Tables
 
-	PhraseAllocations []byte
+	PhraseAllocations PhraseAllocations
 	ChainAllocations  []byte
 	SynthParams       []byte
 
@@ -55,10 +55,10 @@ type Song struct {
 	SynthOverwrites []byte
 	DrumMax         byte
 
-	PhraseCommands      []byte
-	PhraseCommandValues []byte
+	PhraseCommands      PhraseCommands
+	PhraseCommandValues PhraseCommandValues
 
-	Waves             []byte
+	Waves             Waves
 	PhraseInstruments []byte
 	FormatVersion     byte
 }
@@ -103,20 +103,17 @@ func (s *Song) Init(b []byte) error {
 	s.InstrumentParams = b[instrumentParamsOffset:tableTranspositionOffset]
 	s.TableTranspositions = b[tableTranspositionOffset:tableCommand1Offset]
 
-	if err := s.Table1.SetCommand(b[tableCommand1Offset:tableCommand1ValueOffset]); err != nil {
+	if err := s.Table1.Set(b[tableCommand1Offset:tableCommand1ValueOffset], b[tableCommand1ValueOffset:tableCommand2Offset]); err != nil {
 		return err
 	}
-	if err := s.Table1.SetValue(b[tableCommand1ValueOffset:tableCommand2Offset]); err != nil {
-		return err
-	}
-	if err := s.Table2.SetCommand(b[tableCommand2Offset:tableCommand2ValueOffset]); err != nil {
-		return err
-	}
-	if err := s.Table2.SetValue(b[tableCommand2ValueOffset:Rb2Offset]); err != nil {
+	if err := s.Table2.Set(b[tableCommand2Offset:tableCommand2ValueOffset], b[tableCommand2ValueOffset:Rb2Offset]); err != nil {
 		return err
 	}
 
-	s.PhraseAllocations = b[phraseAllocationsOffset:chainAllocationsOffset]
+	if err := s.PhraseAllocations.Set(b[phraseAllocationsOffset:chainAllocationsOffset]); err != nil {
+		return err
+	}
+
 	s.ChainAllocations = b[chainAllocationsOffset:synthParamsOffset]
 	s.SynthParams = b[synthParamsOffset:workHoursOffset]
 	s.WorkHours = b[workHoursOffset]
@@ -140,11 +137,18 @@ func (s *Song) Init(b []byte) error {
 	s.DrumMax = b[drumMaxOffset]
 
 	// Bank 2
-	s.PhraseCommands = b[phraseCommandsOffset:phraseCommandValuesOffset]
-	s.PhraseCommandValues = b[phraseCommandValuesOffset:emptySpace5]
+	if err := s.PhraseCommands.Set(b[phraseCommandsOffset:phraseCommandValuesOffset]); err != nil {
+		return err
+	}
+	if err := s.PhraseCommandValues.Set(b[phraseCommandValuesOffset:emptySpace5]); err != nil {
+		return err
+	}
 
 	// Bank 3
-	s.Waves = b[wavesOffset:phraseInstrumentsOffset]
+	if err := s.Waves.Set(b[wavesOffset:phraseInstrumentsOffset]); err != nil {
+		return err
+	}
+
 	s.PhraseInstruments = b[phraseInstrumentsOffset:Rb3Offset]
 	s.FormatVersion = b[formatVersionOffset]
 

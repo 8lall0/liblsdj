@@ -12,7 +12,14 @@ const (
 	phraseNoInstrument = 0xFF //! The value of "no instrument" at a given step
 )
 
+const phraseAllocationsLength = 0x20     // 20
+const phraseCommandsLength = 0x0ff0      // 4080
+const phraseCommandValuesLength = 0x0ff0 // 4080
+
 type Phrases [phraseCount][phraseLength]byte
+type PhraseCommands [phraseCommandsLength]byte
+type PhraseCommandValues [phraseCommandValuesLength]byte
+type PhraseAllocations [phraseAllocationsLength]byte
 
 func (p *Phrases) Set(b []byte) error {
 	if len(b) != phraseCount*phraseLength {
@@ -22,6 +29,36 @@ func (p *Phrases) Set(b []byte) error {
 	for i := 0; i < phraseCount; i++ {
 		copy(p[i][:], b[i:phraseLength*i])
 	}
+
+	return nil
+}
+
+func (p *PhraseAllocations) Set(b []byte) error {
+	if len(b) != phraseAllocationsLength {
+		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), phraseAllocationsLength))
+	}
+
+	copy(p[:], b[:])
+
+	return nil
+}
+
+func (p *PhraseCommands) Set(b []byte) error {
+	if len(b) != phraseCommandsLength {
+		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), phraseCommandsLength))
+	}
+
+	copy(p[:], b[:])
+
+	return nil
+}
+
+func (p *PhraseCommandValues) Set(b []byte) error {
+	if len(b) != phraseCommandValuesLength {
+		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), phraseCommandValuesLength))
+	}
+
+	copy(p[:], b[:])
 
 	return nil
 }
