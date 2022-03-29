@@ -48,7 +48,9 @@ func main() {
 	dec.Read(docco)
 
 	song := new(liblsdj.Song)
-	song.Init(docco)
+	if err := song.Init(docco); err != nil {
+		panic(err)
+	}
 
 	return
 }
