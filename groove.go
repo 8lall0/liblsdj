@@ -1,11 +1,17 @@
 package liblsdj
 
-const grooveLen = 16
+type groove []byte
 
-type groove [grooveLen]byte
+const (
+	grooveCount   = 0x1f // The amount of grooves in a song
+	grooveLength  = 16   // The number of steps in a groove
+	grooveNoValue = 0    // The value of an empty (unused) step
+)
 
-var defaultGroove = groove{0x06, 0x06, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+func (g groove) SetStep() {
 
-func (g *groove) clear() {
-	*g = defaultGroove
+}
+
+func (g groove) GetStep() {
+	
 }

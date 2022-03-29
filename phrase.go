@@ -1,17 +1,10 @@
 package liblsdj
 
-const phraseLen = 16
+type phrase []byte
 
-type phrase struct {
-	notes       [phraseLen]byte
-	instruments [phraseLen]byte
-	commands    [phraseLen]command
-}
-
-func (p *phrase) clear() {
-	for i := 0; i < phraseLen; i++ {
-		p.notes[i] = 0
-		p.instruments[i] = 0xFF
-		p.commands[i].clear()
-	}
-}
+const (
+	phraseCount        = 0xFF //! The amount of phrases in a song
+	phraseLength       = 16   //! The number of steps in a phrase
+	phraseNoNote       = 0    //! The value of "no note" at a given step
+	phraseNoInstrument = 0xFF //! The value of "no instrument" at a given step
+)

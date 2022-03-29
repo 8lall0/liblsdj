@@ -1,146 +1,163 @@
 package liblsdj
 
-const (
-	songDecompressedSize = 0x8000
-	rowCnt               = 256
-	chainCnt             = 128
-	phraseCnt            = 0xFF
-	instrCnt             = 64
-	synthCnt             = 16
-	tableCnt             = 32
-	waveCnt              = 256
-	grooveCnt            = 32
-	wordCnt              = 42
-	bookmarkPosCnt       = 16
-	noBookmarm           = 0xFF
-	cloneDeep            = 0
-	cloneSlim            = 1
-
-	instrAllocTableSize  = 64
-	tableAllocTableSize  = 32
-	chainAllocTableSize  = 16
-	phraseAllocTableSize = 32
+import (
+	"errors"
+	"fmt"
 )
 
-var tableLengthZero = [tableLen]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-var chainLenZero = [tableLen]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-var chainLenFF = [tableLen]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
-var phraseLenZero = [phraseLen]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-var phraseLenFF = [phraseLen]byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
-
-var wordNameDefault = [wordCnt][wordNameLen]byte{{'C', ' ', '2', ' '}, {'C', ' ', '2', ' '}, {'D', ' ', '2', ' '}, {'D', ' ', '2', ' '}, {'E', ' ', '2', ' '}, {'F', ' ', '2', ' '}, {'F', ' ', '2', ' '}, {'G', ' ', '2', ' '}, {'G', ' ', '2', ' '}, {'A', ' ', '2', ' '}, {'A', ' ', '2', ' '}, {'B', ' ', '2', ' '}, {'C', ' ', '3', ' '}, {'C', ' ', '3', ' '}, {'D', ' ', '3', ' '}, {'D', ' ', '3', ' '}, {'E', ' ', '3', ' '}, {'F', ' ', '3', ' '}, {'F', ' ', '3', ' '}, {'G', ' ', '3', ' '}, {'G', ' ', '3', ' '}, {'A', ' ', '3', ' '}, {'A', ' ', '3', ' '}, {'B', ' ', '3', ' '}, {'C', ' ', '4', ' '}, {'C', ' ', '4', ' '}, {'D', ' ', '4', ' '}, {'D', ' ', '4', ' '}, {'E', ' ', '4', ' '}, {'F', ' ', '4', ' '}, {'F', ' ', '4', ' '}, {'G', ' ', '4', ' '}, {'G', ' ', '4', ' '}, {'A', ' ', '4', ' '}, {'A', ' ', '4', ' '}, {'B', ' ', '4', ' '}, {'C', ' ', '5', ' '}, {'C', ' ', '5', ' '}, {'D', ' ', '5', ' '}, {'D', ' ', '5', ' '}, {'E', ' ', '5', ' '}, {'F', ' ', '5', ' '}}
+// Fase 1: inizia a salvarti i byte della roba
+// Fase 2: trova una struttura migliore per gestire ste cose
 
 type Song struct {
-	formatVersion byte
-	tempo         byte
-	transposition byte
-	drumMax       byte
+	Name    []byte
+	Version byte
 
-	rows        [rowCnt]row
-	chains      [chainCnt]*chain
-	phrases     [phraseCnt]*phrase
-	instruments [instrCnt]*instrument
-	synths      [synthCnt]synth
-	waves       [waveCnt]wave
-	tables      [tableCnt]*table
-	grooves     [grooveCnt]groove
+	Phrases               []byte
+	Bookmarks             []byte
+	Grooves               []byte
+	ChainAssignments      []byte
+	TableEnvelopes        []byte
+	WordsOffset           []byte
+	WordNamesOffset       []byte
+	InstrumentNamesOffset []byte
 
-	words     [wordCnt]word
-	wordNames [wordCnt][wordNameLen]byte
+	TableAllocationTable      []byte
+	InstrumentAllocationTable []byte
+	ChainPhrases              []byte
+	ChainTranspositions       []byte
+	InstrumentParams          []byte
+	TableTranspositions       []byte
+	TableCommand1             []byte
+	TableCommand1Value        []byte
+	TableCommand2             []byte
+	TableCommand2Value        []byte
 
-	bookmarks struct {
-		pulse1 [bookmarkPosCnt]byte
-		pulse2 [bookmarkPosCnt]byte
-		wave   [bookmarkPosCnt]byte
-		noise  [bookmarkPosCnt]byte
-	}
+	// TODO
+	Table1 table
+	Table2 table
 
-	//TODO: bookmarks
-	meta struct {
-		keyDelay        byte
-		keyRepeat       byte
-		font            byte
-		sync            byte
-		colorSet        byte
-		clone           byte
-		fileChangedFlag byte
-		powerSave       byte
-		preListen       byte
+	PhraseAllocations []byte
+	ChainAllocations  []byte
+	SynthParams       []byte
 
-		totalTime struct {
-			days    byte
-			hours   byte
-			minutes byte
-		}
-		workTime struct {
-			hours   byte
-			minutes byte
-		}
-	}
-	reserved1030 [96]byte
-	reserved1fba [70]byte
-	reserved2000 [32]byte
-	reserved3fbf byte
-	reserved3fb9 byte
-	reserved3fc6 [10]byte
-	reserved3fd1 [47]byte
-	reserved5fe0 [32]byte
-	reserved7ff2 [13]byte
+	WorkHours         byte
+	WorkMinutes       byte
+	Tempo             byte
+	Transposition     byte
+	TotalDays         byte
+	TotalHours        byte
+	TotalMinutes      byte
+	TotalTimeChecksum byte
+	KeyDelay          byte
+	KeyRepeat         byte
+	Font              byte
+	SyncMode          byte
+	ColorPalette      byte
+
+	CloneMode       byte
+	FileChanged     byte
+	PowerSave       byte
+	PreListen       byte
+	SynthOverwrites []byte
+	DrumMax         byte
+
+	PhraseCommands      []byte
+	PhraseCommandValues []byte
+
+	Waves             []byte
+	PhraseInstruments []byte
+	FormatVersion     byte
 }
 
-func (s *Song) clear() {
-	s.formatVersion = 4
-	s.tempo = 128
-	s.transposition = 0
-	s.drumMax = 0x6C
+const (
+	bookmarkPerChannelCount = 16
+	noBookmarkValue         = 0xFF
+)
 
-	for i := 0; i < rowCnt; i++ {
-		s.rows[i].clear()
-	}
-	for i := 0; i < waveCnt; i++ {
-		s.waves[i].clear()
-	}
-	for i := 0; i < grooveCnt; i++ {
-		s.grooves[i].clear()
-	}
-	for i := 0; i < chainCnt; i++ {
-		s.chains[i] = nil
-	}
-	for i := 0; i < phraseCnt; i++ {
-		s.phrases[i] = nil
-	}
-	for i := 0; i < instrCnt; i++ {
-		s.instruments[i] = nil
-	}
-	for i := 0; i < synthCnt; i++ {
-		s.synths[i].clear()
+func checkRB(rb []byte) bool {
+	return rb[Rb1Offset] == 'r' && rb[Rb1Offset+1] == 'b' &&
+		rb[Rb2Offset] == 'r' && rb[Rb2Offset+1] == 'b' &&
+		rb[Rb3Offset] == 'r' && rb[Rb3Offset+1] == 'b'
+}
+
+func (s *Song) Init(b []byte) error {
+	if len(b) != 0x8000 {
+		return errors.New("bad format, not the right lenght")
 	}
 
-	for i := 0; i < tableCnt; i++ {
-		s.tables[i] = nil
+	if !checkRB(b) {
+		return errors.New("rb check has failed")
 	}
-	for i := 0; i < wordCnt; i++ {
-		s.words[i].clear()
+
+	// Bank 0
+	s.Phrases = b[phraseNotesOffset : bookmarksOffset-1]
+	s.Bookmarks = b[bookmarksOffset : emptySpace0-1]
+	s.Grooves = b[groovesOffset : chainAssignmentsOffset-1]
+	s.ChainAssignments = b[chainAssignmentsOffset : tableEnvelopesOffset-1]
+	s.TableEnvelopes = b[tableEnvelopesOffset : wordsOffset-1]
+	s.WordsOffset = b[wordsOffset : wordNamesOffset-1]
+	s.WordNamesOffset = b[wordNamesOffset : Rb1Offset-1]
+	s.InstrumentNamesOffset = b[instrumentNamesOffset : emptySpace1-1]
+
+	// Bank 1
+	s.TableAllocationTable = b[tableAllocationTableOffset : instrumentAllocationTableOffset-1]
+	s.InstrumentAllocationTable = b[instrumentAllocationTableOffset : chainPhrasesOffset-1]
+	s.ChainPhrases = b[chainPhrasesOffset : chainTranspositionsOffset-1]
+	s.ChainTranspositions = b[chainTranspositionsOffset : instrumentParamsOffset-1]
+	s.InstrumentParams = b[instrumentParamsOffset : tableTranspositionOffset-1]
+	s.TableTranspositions = b[tableTranspositionOffset : tableCommand1Offset-1]
+
+	tab1 := &table{
+		Command: b[tableCommand1Offset : tableCommand1ValueOffset-1],
+		Value:   b[tableCommand1ValueOffset : tableCommand2Offset-1],
 	}
-	s.wordNames = wordNameDefault
+	s.Table1 = *tab1
+	tab2 := &table{
+		Command: b[tableCommand2Offset : tableCommand2ValueOffset-1],
+		Value:   b[tableCommand2ValueOffset : Rb2Offset-1],
+	}
+	s.Table2 = *tab2
+	// DELENDA
+	s.TableCommand1 = b[tableCommand1Offset : tableCommand1ValueOffset-1]
+	s.TableCommand1Value = b[tableCommand1ValueOffset : tableCommand2Offset-1]
+	s.TableCommand2 = b[tableCommand2Offset : tableCommand2ValueOffset-1]
+	s.TableCommand2Value = b[tableCommand2ValueOffset : Rb2Offset-1]
+	// Fine DELENDA
 
-	/*
-		memset(&Song->bookmarks, LSDJ_NO_BOOKMARK, sizeof(Song->bookmarks));
-	*/
+	s.PhraseAllocations = b[phraseAllocationsOffset : chainAllocationsOffset-1]
+	s.ChainAllocations = b[chainAllocationsOffset : synthParamsOffset-1]
+	s.SynthParams = b[synthParamsOffset : workHoursOffset-1]
+	s.WorkHours = b[workHoursOffset]
+	s.WorkMinutes = b[workMinutesOffset]
+	s.Tempo = b[tempoOffset]
+	s.Transposition = b[transpositionOffset]
+	s.TotalDays = b[totalDaysOffset]
+	s.TotalHours = b[totalHoursOffset]
+	s.TotalMinutes = b[totalMinutesOffset]
+	s.TotalTimeChecksum = b[totalTimeChecksumOffset]
+	s.KeyDelay = b[keyDelayOffset]
+	s.KeyRepeat = b[keyRepeatOffset]
+	s.Font = b[fontOffset]
+	s.SyncMode = b[syncModeOffset]
+	s.ColorPalette = b[colorPaletteOffset]
+	s.CloneMode = b[cloneModeOffset]
+	s.FileChanged = b[fileChangedOffset]
+	s.PowerSave = b[powerSaveOffset]
+	s.PreListen = b[prelistenOffset]
+	s.SynthOverwrites = b[synthOverwritesOffset : emptySpace3-1]
+	s.DrumMax = b[drumMaxOffset]
 
-	s.meta.keyDelay = 7
-	s.meta.keyRepeat = 2
-	s.meta.font = 0
-	s.meta.sync = 0
-	s.meta.colorSet = 0
-	s.meta.clone = 0
-	s.meta.fileChangedFlag = 0
-	s.meta.powerSave = 0
-	s.meta.preListen = 1
+	// Bank 2
+	s.PhraseCommands = b[phraseCommandsOffset : phraseCommandValuesOffset-1]
+	s.PhraseCommandValues = b[phraseCommandValuesOffset : emptySpace5-1]
 
-	s.meta.totalTime.days = 0
-	s.meta.totalTime.hours = 0
-	s.meta.totalTime.minutes = 0
-	s.meta.workTime.hours = 0
-	s.meta.workTime.minutes = 0
+	// Bank 3
+	s.Waves = b[wavesOffset : phraseInstrumentsOffset-1]
+	s.PhraseInstruments = b[phraseInstrumentsOffset : Rb3Offset-1]
+	s.FormatVersion = b[formatVersionOffset]
+
+	// indagare, dovrebbero essere almeno 64
+	fmt.Println(len(s.Bookmarks))
+
+	return nil
 }

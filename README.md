@@ -1,3 +1,6 @@
+#MAJOR REFACTOR IN PROGRESS
+![ALERT MAJOR REFACTORING](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/OOjs_UI_icon_alert_destructive.svg/480px-OOjs_UI_icon_alert_destructive.svg.png)
+
 # liblsdj
 
 [Little Sound DJ](http://littlesounddj.com) is wonderful tool that transforms your old gameboy into a music making machine. It has a thriving community of users that pushes their old hardware to its limits, in pursuit of new musical endeavours. It can however be cumbersome to manage songs and sounds outside of the gameboy.
@@ -17,8 +20,8 @@ Every architecture supported by Go should work fine.
 
 ## Todo
 - [ ] Compress .lsdsng song
-- [x] Decompress .lsdsng song
-- [x] Read song from .lsdsng
+- [ ] Decompress .lsdsng song
+- [ ] Read song from .lsdsng
 - [ ] Write song onto .lsdsng
 - [ ] Read from .sav
 - [ ] Write to .sav
