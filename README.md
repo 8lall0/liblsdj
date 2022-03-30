@@ -1,5 +1,6 @@
-#MAJOR REFACTOR IN PROGRESS
 ![ALERT MAJOR REFACTORING](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/OOjs_UI_icon_alert_destructive.svg/480px-OOjs_UI_icon_alert_destructive.svg.png)
+
+#MAJOR REFACTOR IN PROGRESS
 
 # liblsdj
 
