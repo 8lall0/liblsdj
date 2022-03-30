@@ -17,7 +17,9 @@ type Tables [tableCount]struct {
 	Value   [tableLength]byte
 }
 
-type TableAllocationTables []byte
+type TableAllocationTable []byte
+type TableEnvelopes []byte
+type TableTranspositions []byte
 
 func (t *Tables) Set(command, value []byte) error {
 	if len(command) != tableCount*tableLength {
@@ -33,6 +35,17 @@ func (t *Tables) Set(command, value []byte) error {
 		copy(t[i].Command[:], command[tableLength*i:tableLength*(i+1)])
 		copy(t[i].Value[:], value[tableLength*i:tableLength*(i+1)])
 	}
+
+	return nil
+}
+
+func (t *TableAllocationTable) Set(b []byte) error {
+	if len(b) != allocationTableLength {
+		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), allocationTableLength))
+	}
+
+	// TODO da controllare
+	copy(*t, b)
 
 	return nil
 }

@@ -15,11 +15,13 @@ const (
 const phraseAllocationsLength = 0x20     // 20
 const phraseCommandsLength = 0x0ff0      // 4080
 const phraseCommandValuesLength = 0x0ff0 // 4080
+const phraseInstrumentsLength = 0xFF0    // Inserito io
 
 type Phrases [phraseCount][phraseLength]byte
 type PhraseCommands [phraseCommandsLength]byte
 type PhraseCommandValues [phraseCommandValuesLength]byte
 type PhraseAllocations [phraseAllocationsLength]byte
+type PhraseInstruments [phraseInstrumentsLength]byte
 
 func (p *Phrases) Set(b []byte) error {
 	if len(b) != phraseCount*phraseLength {
@@ -56,6 +58,16 @@ func (p *PhraseCommands) Set(b []byte) error {
 func (p *PhraseCommandValues) Set(b []byte) error {
 	if len(b) != phraseCommandValuesLength {
 		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), phraseCommandValuesLength))
+	}
+
+	copy(p[:], b[:])
+
+	return nil
+}
+
+func (p *PhraseInstruments) Set(b []byte) error {
+	if len(b) != phraseInstrumentsLength {
+		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), phraseInstrumentsLength))
 	}
 
 	copy(p[:], b[:])

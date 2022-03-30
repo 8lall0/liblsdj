@@ -12,7 +12,7 @@ import (
 // Una volta che ho il []byte decompresso (che dovrà essere di 0x8000 * il numero di canzoni) mi calcolo tutte le canzoni e relative chain, phrases ECC
 
 func main() {
-	file, err := os.Open("em.sav")
+	file, err := os.Open("lsdj.sav")
 	if err != nil {
 		fmt.Println(err)
 		return

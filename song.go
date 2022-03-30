@@ -8,59 +8,51 @@ import (
 // Fase 2: trova una struttura migliore per gestire ste cose
 
 type Song struct {
-	Name    []byte
-	Version byte
-
-	Phrases               Phrases
-	Bookmarks             Bookmarks
-	Grooves               Grooves
-	ChainAssignments      []byte
-	TableEnvelopes        []byte
-	WordsOffset           []byte
-	WordNamesOffset       []byte
-	InstrumentNamesOffset []byte
-
-	TableAllocationTable      []byte
-	InstrumentAllocationTable []byte
-	ChainPhrases              []byte
-	ChainTranspositions       []byte
-	InstrumentParams          []byte
-	TableTranspositions       []byte
-
-	Table1 Tables
-	Table2 Tables
-
-	PhraseAllocations PhraseAllocations
-	ChainAllocations  []byte
-	SynthParams       []byte
-
-	WorkHours         byte
-	WorkMinutes       byte
-	Tempo             byte
-	Transposition     byte
-	TotalDays         byte
-	TotalHours        byte
-	TotalMinutes      byte
-	TotalTimeChecksum byte
-	KeyDelay          byte
-	KeyRepeat         byte
-	Font              byte
-	SyncMode          byte
-	ColorPalette      byte
-
-	CloneMode       byte
-	FileChanged     byte
-	PowerSave       byte
-	PreListen       byte
-	SynthOverwrites []byte
-	DrumMax         byte
-
-	PhraseCommands      PhraseCommands
-	PhraseCommandValues PhraseCommandValues
-
-	Waves             Waves
-	PhraseInstruments []byte
-	FormatVersion     byte
+	Name                      []byte
+	Version                   byte
+	Phrases                   Phrases
+	Bookmarks                 Bookmarks
+	Grooves                   Grooves
+	ChainAssignments          ChainAssignments
+	TableEnvelopes            TableEnvelopes
+	Words                     Words
+	WordNames                 WordNames
+	InstrumentNames           InstrumentNames
+	TableAllocationTable      TableAllocationTable
+	InstrumentAllocationTable InstrumentAllocationTable
+	ChainPhrases              ChainPhrases
+	ChainTranspositions       ChainTranspositions
+	InstrumentParams          InstrumentParams
+	TableTranspositions       TableTranspositions
+	Table1                    Tables
+	Table2                    Tables
+	PhraseAllocations         PhraseAllocations
+	ChainAllocations          ChainAllocations
+	SynthParams               SynthParams
+	WorkHours                 byte
+	WorkMinutes               byte
+	Tempo                     byte
+	Transposition             byte
+	TotalDays                 byte
+	TotalHours                byte
+	TotalMinutes              byte
+	TotalTimeChecksum         byte
+	KeyDelay                  byte
+	KeyRepeat                 byte
+	Font                      byte
+	SyncMode                  byte
+	ColorPalette              byte
+	CloneMode                 byte
+	FileChanged               byte
+	PowerSave                 byte
+	PreListen                 byte
+	SynthOverwrites           SynthOverwrites
+	DrumMax                   byte
+	PhraseCommands            PhraseCommands
+	PhraseCommandValues       PhraseCommandValues
+	Waves                     Waves
+	PhraseInstruments         PhraseInstruments
+	FormatVersion             byte
 }
 
 func checkRB(rb []byte) bool {
@@ -88,17 +80,23 @@ func (s *Song) Init(b []byte) error {
 	if err := s.Grooves.Set(b[groovesOffset:chainAssignmentsOffset]); err != nil {
 		return err
 	}
+	if err := s.ChainAssignments.Set(b[chainAssignmentsOffset:tableEnvelopesOffset]); err != nil {
+		return err
+	}
 
-	s.ChainAssignments = b[chainAssignmentsOffset:tableEnvelopesOffset]
 	s.TableEnvelopes = b[tableEnvelopesOffset:wordsOffset]
-	s.WordsOffset = b[wordsOffset:wordNamesOffset]
-	s.WordNamesOffset = b[wordNamesOffset:Rb1Offset]
-	s.InstrumentNamesOffset = b[instrumentNamesOffset:emptySpace1]
+	s.Words = b[wordsOffset:wordNamesOffset]
+	s.WordNames = b[wordNamesOffset:Rb1Offset]
+	if err := s.InstrumentNames.Set(b[instrumentNamesOffset:emptySpace1]); err != nil {
+		return err
+	}
 
 	// Bank 1
 	s.TableAllocationTable = b[tableAllocationTableOffset:instrumentAllocationTableOffset]
-	s.InstrumentAllocationTable = b[instrumentAllocationTableOffset:chainPhrasesOffset]
-	s.ChainPhrases = b[chainPhrasesOffset:chainTranspositionsOffset]
+	if err := s.InstrumentAllocationTable.Set(b[instrumentAllocationTableOffset:chainPhrasesOffset]); err != nil {
+		return err
+	}
+	s.ChainPhrases = b[chainPhrasesOffset:chainTranspositionsOffset] //0x800, 2048 dovrebbe essere 2032, c'è qualcosa che qualquadra non
 	s.ChainTranspositions = b[chainTranspositionsOffset:instrumentParamsOffset]
 	s.InstrumentParams = b[instrumentParamsOffset:tableTranspositionOffset]
 	s.TableTranspositions = b[tableTranspositionOffset:tableCommand1Offset]
@@ -149,7 +147,9 @@ func (s *Song) Init(b []byte) error {
 		return err
 	}
 
-	s.PhraseInstruments = b[phraseInstrumentsOffset:Rb3Offset]
+	if err := s.PhraseInstruments.Set(b[phraseInstrumentsOffset:Rb3Offset]); err != nil {
+		return err
+	}
 	s.FormatVersion = b[formatVersionOffset]
 
 	return nil
