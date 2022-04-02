@@ -1,6 +1,9 @@
 package liblsdj
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type Song struct {
 	Name              []byte
@@ -13,8 +16,7 @@ type Song struct {
 	Waves             []Wave
 	Grooves           []Groove
 	ChainAssignments  ChainAssignments
-	Words             Words
-	WordNames         WordNames
+	Words             []Word
 	AllocationTable   AllocationTable
 	SynthParams       SynthParams
 	WorkHours         byte
@@ -39,41 +41,47 @@ type Song struct {
 	FormatVersion     byte
 }
 
-func (s *Song) Init(b []byte) error {
+func ReadSong(b []byte) (*Song, error) {
 	if len(b) != 0x8000 {
-		return errors.New("bad format, not the right lenght")
+		return nil, errors.New("bad format, not the right lenght")
 	}
 
 	if !checkRB(b) {
-		return errors.New("rb check has failed")
+		return nil, errors.New("rb check has failed")
 	}
 
+	s := new(Song)
+
 	if err := s.setPhrases(b); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.setChains(b); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.setTables(b); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.setInstruments(b); err != nil {
-		return err
+		return nil, err
+	}
+
+	if err := s.setWords(b); err != nil {
+		return nil, err
 	}
 
 	if err := s.setAllocations(b); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.setWaves(b); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := s.setGrooves(b); err != nil {
-		return err
+		return nil, err
 	}
 
 	s.SynthParams = b[synthParamsOffset:workHoursOffset]
@@ -99,12 +107,10 @@ func (s *Song) Init(b []byte) error {
 	s.FormatVersion = b[formatVersionOffset]
 
 	if err := s.ChainAssignments.Set(b[chainAssignmentsOffset:tableEnvelopesOffset]); err != nil {
-		return err
+		return nil, err
 	}
-	s.Words = b[wordsOffset:wordNamesOffset]
-	s.WordNames = b[wordNamesOffset:Rb1Offset]
 
-	return nil
+	return s, nil
 }
 
 func (s *Song) setPhrases(b []byte) error {
@@ -124,7 +130,6 @@ func (s *Song) setPhrases(b []byte) error {
 }
 
 func (s *Song) setChains(b []byte) error {
-	// Set chains
 	phrases := b[chainPhrasesOffset:chainTranspositionsOffset]
 	commands := b[chainTranspositionsOffset:instrumentParamsOffset]
 
@@ -138,7 +143,6 @@ func (s *Song) setChains(b []byte) error {
 }
 
 func (s *Song) setTables(b []byte) error {
-	// Set tables
 	envelopes := b[tableEnvelopesOffset:wordsOffset]
 	transpositions := b[tableTranspositionOffset:tableCommand1Offset]
 	col1Commands := b[tableCommand1Offset:tableCommand1ValueOffset]
@@ -148,7 +152,7 @@ func (s *Song) setTables(b []byte) error {
 
 	t, err := setTables(envelopes, transpositions, col1Commands, col1Values, col2Commands, col2Values)
 	if err != nil {
-		return err
+		return fmt.Errorf("setTables: %w", err)
 	}
 	s.Tables = t
 
@@ -162,7 +166,7 @@ func (s *Song) setAllocations(b []byte) error {
 	tables := b[tableAllocationTableOffset:instrumentAllocationTableOffset]
 
 	if err := s.AllocationTable.Set(phrases, chains, instruments, tables); err != nil {
-		return err
+		return fmt.Errorf("setAllocations: %w", err)
 	}
 
 	return nil
@@ -172,7 +176,7 @@ func (s *Song) setBookmarks(b []byte) error {
 	bo, err := setBookmarks(b[bookmarksOffset:emptySpace0])
 
 	if err != nil {
-		return err
+		return fmt.Errorf("setBookmarks: %w", err)
 	}
 	s.Bookmarks = bo
 
@@ -185,7 +189,7 @@ func (s *Song) setInstruments(b []byte) error {
 
 	in, err := setInstruments(names, params)
 	if err != nil {
-		return err
+		return fmt.Errorf("setInstruments: %w", err)
 	}
 
 	s.Instruments = in
@@ -198,7 +202,7 @@ func (s *Song) setWaves(b []byte) error {
 
 	wv, err := setWaves(waves)
 	if err != nil {
-		return err
+		return fmt.Errorf("setWaves: %w", err)
 	}
 
 	s.Waves = wv
@@ -211,10 +215,23 @@ func (s *Song) setGrooves(b []byte) error {
 
 	gr, err := setGrooves(grooves)
 	if err != nil {
-		return err
+		return fmt.Errorf("setGrooves: %w", err)
 	}
 
 	s.Grooves = gr
+
+	return nil
+}
+
+func (s *Song) setWords(b []byte) error {
+	values := b[wordsOffset:wordNamesOffset]
+	names := b[wordNamesOffset:Rb1Offset]
+	wr, err := setWords(names, values)
+	if err != nil {
+		return fmt.Errorf("setWords: %w", err)
+	}
+
+	s.Words = wr
 
 	return nil
 }

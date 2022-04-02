@@ -44,11 +44,11 @@ func main() {
 		panic(err)
 	}
 
-	docco := make([]byte, 0x8000)
-	_, _ = dec.Read(docco)
+	songData := make([]byte, 0x8000)
+	_, _ = dec.Read(songData)
 
-	song := new(liblsdj.Song)
-	if err := song.Init(docco); err != nil {
+	_, err = liblsdj.ReadSong(songData)
+	if err != nil {
 		panic(err)
 	}
 
