@@ -1,7 +1,6 @@
 package liblsdj
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -14,40 +13,31 @@ const (
 	instrumentNoiseLengthInfinite = 0x40 //! The value of an infinite noise length
 )
 
-type InstrumentAllocationTable [instrumentCount]byte
 type InstrumentParams [instrumentCount * instrumentByteCount]byte
 type InstrumentNames [instrumentCount][instrumentNameLength]byte
 
-func (in *InstrumentAllocationTable) Set(b []byte) error {
-	if len(b) != instrumentCount {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), instrumentCount))
-	}
-
-	copy(in[:], b[:])
-
-	return nil
+type Instrument struct {
+	Name   []byte
+	Params []byte
 }
 
-func (in *InstrumentNames) Set(b []byte) error {
-	if len(b) != instrumentCount*instrumentNameLength {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), instrumentCount*instrumentNameLength))
+func setInstruments(names, params []byte) ([]Instrument, error) {
+	if len(names) != instrumentCount*instrumentNameLength {
+		return nil, fmt.Errorf("unexpected instruments name length: %v, %v", len(names), instrumentCount*instrumentNameLength)
+	} else if len(params) != instrumentCount*instrumentByteCount {
+		return nil, fmt.Errorf("unexpected instruments name length: %v, %v", len(params), instrumentCount*instrumentByteCount)
 	}
 
-	for i := 0; i < len(b)/instrumentNameLength; i++ {
-		copy(in[i][:], b[instrumentNameLength*i:instrumentNameLength*(i+1)])
+	in := make([]Instrument, instrumentCount)
+	for i := 0; i < len(names)/instrumentNameLength; i++ {
+		in[i].Name = names[instrumentNameLength*i : instrumentNameLength*(i+1)]
+
+	}
+	for i := 0; i < len(params)/instrumentByteCount; i++ {
+		in[i].Params = params[instrumentByteCount*i : instrumentByteCount*(i+1)]
 	}
 
-	return nil
-}
-
-func (in *InstrumentParams) Set(b []byte) error {
-	if len(b) != instrumentCount*instrumentByteCount {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), instrumentCount*instrumentByteCount))
-	}
-
-	copy(in[:], b[:])
-
-	return nil
+	return in, nil
 }
 
 //! The kind of instrument types that exist

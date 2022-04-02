@@ -1,7 +1,6 @@
 package liblsdj
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -16,66 +15,33 @@ const phraseAllocationsLength = 0x20     // 20
 const phraseCommandsLength = 0x0ff0      // 4080
 const phraseCommandValuesLength = 0x0ff0 // 4080
 
-type Phrases [phraseCount][phraseLength]byte
-type Phrase [phraseCount]struct {
-	Command [phraseLength]byte
-	Value   [phraseLength]byte
+type Phrase struct {
+	phrase      [phraseLength]byte
+	command     [phraseLength]byte
+	value       [phraseLength]byte
+	instruments [phraseLength]byte
 }
-type PhraseInstruments [phraseCount * phraseLength]byte
-type PhraseAllocations [phraseAllocationsLength]byte
 
-func (p *Phrases) Set(b []byte) error {
-	if len(b) != phraseCount*phraseLength {
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), phraseCount*phraseLength))
+func setPhrases(phrases, commands, values, instruments []byte) ([]Phrase, error) {
+	totalLength := phraseCount * phraseLength
+
+	if len(phrases) != totalLength {
+		return nil, fmt.Errorf("unexpected phrases length; expected: %v, got: %v", len(phrases), totalLength)
+	} else if len(commands) != totalLength {
+		return nil, fmt.Errorf("unexpected phrase commands length; expected: %v, got: %v", len(commands), totalLength)
+	} else if len(values) != totalLength {
+		return nil, fmt.Errorf("unexpected phrase values length; expected: %v, got: %v", len(values), totalLength)
+	} else if len(instruments) != totalLength {
+		return nil, fmt.Errorf("unexpected phrase instruments length; expected: %v, got: %v", len(values), totalLength)
 	}
 
+	p := make([]Phrase, phraseCount)
 	for i := 0; i < phraseCount; i++ {
-		copy(p[i][:], b[i:phraseLength*i])
+		copy(p[i].phrase[:], phrases[i:phraseLength*i])
+		copy(p[i].command[:], commands[i:phraseLength*i])
+		copy(p[i].value[:], values[i:phraseLength*i])
+		copy(p[i].instruments[:], instruments[i:phraseLength*i])
 	}
 
-	return nil
-}
-
-func (p *PhraseInstruments) Set(b []byte) error {
-	if len(b) != phraseCount*phraseLength {
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), phraseCount*phraseLength))
-	}
-
-	copy(p[:], b[:])
-
-	return nil
-}
-
-func (p *Phrase) SetCommand(b []byte) error {
-	if len(b) != phraseCount*phraseLength {
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), phraseCount*phraseLength))
-	}
-
-	for i := 0; i < 4; i++ {
-		copy(p[i].Command[:], b[i:phraseLength*i])
-	}
-
-	return nil
-}
-
-func (p *Phrase) SetValue(b []byte) error {
-	if len(b) != phraseCount*phraseLength {
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), phraseCount*phraseLength))
-	}
-
-	for i := 0; i < 4; i++ {
-		copy(p[i].Value[:], b[i:phraseLength*i])
-	}
-
-	return nil
-}
-
-func (pa *PhraseAllocations) Set(b []byte) error {
-	if len(b) != phraseAllocationsLength {
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), phraseAllocationsLength))
-	}
-
-	copy(pa[:], b[:])
-
-	return nil
+	return p, nil
 }

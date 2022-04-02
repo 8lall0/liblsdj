@@ -1,7 +1,6 @@
 package liblsdj
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -13,58 +12,41 @@ const (
 	tableEnvelopesLength      = 0x200
 )
 
-type Tables [tableCount]struct {
-	Command [tableLength]byte
-	Value   [tableLength]byte
+type Table struct {
+	envelopes     [tableLength]byte
+	transposition [tableLength]byte
+	col1, col2    struct {
+		command [tableLength]byte
+		value   [tableLength]byte
+	}
 }
 
-type TableAllocationTable [tableAllocationLength]byte
-type TableTranspositions [tableTranspositionsLength]byte
-type TableEnvelopes [tableEnvelopesLength]byte
+func setTables(envelopes, transpositions []byte, col1Commands, col1Values, col2Commands, col2Values []byte) ([]Table, error) {
+	totalLength := tableCount * tableLength
 
-func (t *Tables) Set(command, value []byte) error {
-	if len(command) != tableCount*tableLength {
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(command), tableCount*tableLength))
+	if len(envelopes) != totalLength {
+		return nil, fmt.Errorf("unexpected phrases length; expected: %v, got: %v", len(envelopes), totalLength)
+	} else if len(transpositions) != totalLength {
+		return nil, fmt.Errorf("unexpected phrase commands length; expected: %v, got: %v", len(transpositions), totalLength)
+	} else if len(col1Commands) != totalLength {
+		return nil, fmt.Errorf("unexpected phrase values length; expected: %v, got: %v", len(col1Commands), totalLength)
+	} else if len(col1Values) != totalLength {
+		return nil, fmt.Errorf("unexpected phrase instruments length; expected: %v, got: %v", len(col1Values), totalLength)
+	} else if len(col2Commands) != totalLength {
+		return nil, fmt.Errorf("unexpected phrase values length; expected: %v, got: %v", len(col2Commands), totalLength)
+	} else if len(col2Values) != totalLength {
+		return nil, fmt.Errorf("unexpected phrase instruments length; expected: %v, got: %v", len(col2Values), totalLength)
 	}
 
-	if len(value) != tableCount*tableLength {
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(value), tableCount*tableLength))
+	p := make([]Table, tableCount)
+	for i := 0; i < tableCount; i++ {
+		copy(p[i].envelopes[:], envelopes[i:tableLength*i])
+		copy(p[i].transposition[:], transpositions[i:tableLength*i])
+		copy(p[i].col1.command[:], col1Commands[i:tableLength*i])
+		copy(p[i].col1.value[:], col1Values[i:tableLength*i])
+		copy(p[i].col2.command[:], col2Commands[i:tableLength*i])
+		copy(p[i].col2.value[:], col2Values[i:tableLength*i])
 	}
 
-	for i := 0; i < 4; i++ {
-		copy(t[i].Command[:], command[tableLength*i:tableLength*(i+1)])
-		copy(t[i].Value[:], value[tableLength*i:tableLength*(i+1)])
-	}
-
-	return nil
-}
-
-func (ta *TableAllocationTable) Set(b []byte) error {
-	if len(b) != tableAllocationLength {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), tableAllocationLength))
-	}
-
-	copy(ta[:], b[:])
-
-	return nil
-}
-
-func (tt *TableTranspositions) Set(b []byte) error {
-	if len(b) != tableTranspositionsLength {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), tableTranspositionsLength))
-	}
-
-	copy(tt[:], b[:])
-
-	return nil
-}
-
-func (te *TableEnvelopes) Set(b []byte) error {
-	if len(b) != tableEnvelopesLength {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), tableEnvelopesLength))
-	}
-
-	copy(te[:], b[:])
-
-	return nil
+	return p, nil
 }

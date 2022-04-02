@@ -1,7 +1,6 @@
 package liblsdj
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -14,15 +13,16 @@ const (
 	grooveNoValue = 0    // The value of an empty (unused) step
 )
 
-func (g *Grooves) Set(b []byte) error {
+func setGrooves(grooves []byte) ([]Groove, error) {
 	// Adding +1, have to learn about grooves
-	if len(b) != (grooveCount+1)*grooveLength {
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), (grooveCount+1)*grooveLength))
+	if len(grooves) != (grooveCount+1)*grooveLength {
+		return nil, fmt.Errorf("unexpected phrase length: %v, %v", len(grooves), (grooveCount+1)*grooveLength)
 	}
 
-	for i := 0; i < grooveCount; i++ {
-		copy(g[i][:], b[i:grooveLength*i])
+	gr := make([]Groove, grooveCount+1)
+	for i := 0; i < grooveCount+1; i++ {
+		copy(gr[i][:], grooves[i:grooveLength*i])
 	}
 
-	return nil
+	return gr, nil
 }

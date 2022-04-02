@@ -22,3 +22,9 @@ func writeByte(b byte, w io.WriteSeeker) (err error) {
 
 	return
 }
+
+func checkRB(rb []byte) bool {
+	return rb[Rb1Offset] == 'r' && rb[Rb1Offset+1] == 'b' &&
+		rb[Rb2Offset] == 'r' && rb[Rb2Offset+1] == 'b' &&
+		rb[Rb3Offset] == 'r' && rb[Rb3Offset+1] == 'b'
+}
