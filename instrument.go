@@ -15,7 +15,7 @@ const (
 )
 
 type InstrumentAllocationTable [instrumentCount]byte
-type InstrumentParams []byte
+type InstrumentParams [instrumentCount * instrumentByteCount]byte
 type InstrumentNames [instrumentCount][instrumentNameLength]byte
 
 func (in *InstrumentAllocationTable) Set(b []byte) error {
@@ -36,6 +36,16 @@ func (in *InstrumentNames) Set(b []byte) error {
 	for i := 0; i < len(b)/instrumentNameLength; i++ {
 		copy(in[i][:], b[instrumentNameLength*i:instrumentNameLength*(i+1)])
 	}
+
+	return nil
+}
+
+func (in *InstrumentParams) Set(b []byte) error {
+	if len(b) != instrumentCount*instrumentByteCount {
+		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), instrumentCount*instrumentByteCount))
+	}
+
+	copy(in[:], b[:])
 
 	return nil
 }

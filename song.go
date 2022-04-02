@@ -4,8 +4,8 @@ import (
 	"errors"
 )
 
-// Fase 1: inizia a salvarti i byte della roba
-// Fase 2: trova una struttura migliore per gestire ste cose
+// Fase 1: inizia a salvarti i byte della roba DONE
+// Fase 2: trova una struttura migliore per gestire ste cose (potrei fare degli array anziché un gigatipo così
 
 type Song struct {
 	Name                      []byte
@@ -87,7 +87,9 @@ func (s *Song) Init(b []byte) error {
 	}
 
 	s.Words = b[wordsOffset:wordNamesOffset]
+
 	s.WordNames = b[wordNamesOffset:Rb1Offset]
+
 	if err := s.InstrumentNames.Set(b[instrumentNamesOffset:emptySpace1]); err != nil {
 		return err
 	}
@@ -96,27 +98,35 @@ func (s *Song) Init(b []byte) error {
 	if err := s.InstrumentAllocationTable.Set(b[instrumentAllocationTableOffset:chainPhrasesOffset]); err != nil {
 		return err
 	}
+
 	s.ChainPhrases = b[chainPhrasesOffset:chainTranspositionsOffset] //0x800, 2048 dovrebbe essere 2032, c'è qualcosa che qualquadra non
+
 	s.ChainTranspositions = b[chainTranspositionsOffset:instrumentParamsOffset]
-	s.InstrumentParams = b[instrumentParamsOffset:tableTranspositionOffset]
+
+	if err := s.InstrumentParams.Set(b[instrumentParamsOffset:tableTranspositionOffset]); err != nil {
+		return err
+	}
 
 	if err := s.Table1.Set(b[tableCommand1Offset:tableCommand1ValueOffset], b[tableCommand1ValueOffset:tableCommand2Offset]); err != nil {
 		return err
 	}
+
 	if err := s.TableEnvelopes.Set(b[tableEnvelopesOffset:wordsOffset]); err != nil {
 		return err
 	}
 
-	// Bank 1
 	if err := s.TableAllocationTable.Set(b[tableAllocationTableOffset:instrumentAllocationTableOffset]); err != nil {
 		return err
 	}
+
 	s.ChainPhrases = b[chainPhrasesOffset:chainTranspositionsOffset]
+
 	s.ChainTranspositions = b[chainTranspositionsOffset:instrumentParamsOffset]
-	s.InstrumentParams = b[instrumentParamsOffset:tableTranspositionOffset]
+
 	if err := s.TableTranspositions.Set(b[tableTranspositionOffset:tableCommand1Offset]); err != nil {
 		return err
 	}
+
 	if err := s.Table2.Set(b[tableCommand2Offset:tableCommand2ValueOffset], b[tableCommand2ValueOffset:Rb2Offset]); err != nil {
 		return err
 	}
@@ -151,6 +161,7 @@ func (s *Song) Init(b []byte) error {
 	if err := s.Phrase.SetCommand(b[phraseCommandsOffset:phraseCommandValuesOffset]); err != nil {
 		return err
 	}
+
 	if err := s.Phrase.SetValue(b[phraseCommandValuesOffset:emptySpace5]); err != nil {
 		return err
 	}

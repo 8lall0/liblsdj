@@ -1,5 +1,15 @@
 package liblsdj
 
+// Metadata Offsets
+const (
+	fileNamesOffset      = 0x0000
+	fileversions         = 0x100
+	emptyMeta            = 0x8120
+	sram                 = 0x813E
+	active               = 0x8140
+	blockAllocationTable = 0x8141
+)
+
 // --- Bank 0 --- //
 const (
 	phraseNotesOffset      = 0x0000
