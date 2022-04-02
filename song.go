@@ -46,10 +46,9 @@ type Song struct {
 	FileChanged               byte
 	PowerSave                 byte
 	PreListen                 byte
-	SynthOverwrites           SynthOverwrites
+	SynthOverwrites           []byte
 	DrumMax                   byte
-	PhraseCommands            PhraseCommands
-	PhraseCommandValues       PhraseCommandValues
+	Phrase                    Phrase
 	Waves                     Waves
 	PhraseInstruments         PhraseInstruments
 	FormatVersion             byte
@@ -74,17 +73,19 @@ func (s *Song) Init(b []byte) error {
 	if err := s.Phrases.Set(b[phraseNotesOffset:bookmarksOffset]); err != nil {
 		return err
 	}
+
 	if err := s.Bookmarks.Set(b[bookmarksOffset:emptySpace0]); err != nil {
 		return err
 	}
+
 	if err := s.Grooves.Set(b[groovesOffset:chainAssignmentsOffset]); err != nil {
 		return err
 	}
+
 	if err := s.ChainAssignments.Set(b[chainAssignmentsOffset:tableEnvelopesOffset]); err != nil {
 		return err
 	}
 
-	s.TableEnvelopes = b[tableEnvelopesOffset:wordsOffset]
 	s.Words = b[wordsOffset:wordNamesOffset]
 	s.WordNames = b[wordNamesOffset:Rb1Offset]
 	if err := s.InstrumentNames.Set(b[instrumentNamesOffset:emptySpace1]); err != nil {
@@ -92,16 +93,28 @@ func (s *Song) Init(b []byte) error {
 	}
 
 	// Bank 1
-	s.TableAllocationTable = b[tableAllocationTableOffset:instrumentAllocationTableOffset]
 	if err := s.InstrumentAllocationTable.Set(b[instrumentAllocationTableOffset:chainPhrasesOffset]); err != nil {
 		return err
 	}
 	s.ChainPhrases = b[chainPhrasesOffset:chainTranspositionsOffset] //0x800, 2048 dovrebbe essere 2032, c'è qualcosa che qualquadra non
 	s.ChainTranspositions = b[chainTranspositionsOffset:instrumentParamsOffset]
 	s.InstrumentParams = b[instrumentParamsOffset:tableTranspositionOffset]
-	s.TableTranspositions = b[tableTranspositionOffset:tableCommand1Offset]
 
 	if err := s.Table1.Set(b[tableCommand1Offset:tableCommand1ValueOffset], b[tableCommand1ValueOffset:tableCommand2Offset]); err != nil {
+		return err
+	}
+	if err := s.TableEnvelopes.Set(b[tableEnvelopesOffset:wordsOffset]); err != nil {
+		return err
+	}
+
+	// Bank 1
+	if err := s.TableAllocationTable.Set(b[tableAllocationTableOffset:instrumentAllocationTableOffset]); err != nil {
+		return err
+	}
+	s.ChainPhrases = b[chainPhrasesOffset:chainTranspositionsOffset]
+	s.ChainTranspositions = b[chainTranspositionsOffset:instrumentParamsOffset]
+	s.InstrumentParams = b[instrumentParamsOffset:tableTranspositionOffset]
+	if err := s.TableTranspositions.Set(b[tableTranspositionOffset:tableCommand1Offset]); err != nil {
 		return err
 	}
 	if err := s.Table2.Set(b[tableCommand2Offset:tableCommand2ValueOffset], b[tableCommand2ValueOffset:Rb2Offset]); err != nil {
@@ -135,10 +148,10 @@ func (s *Song) Init(b []byte) error {
 	s.DrumMax = b[drumMaxOffset]
 
 	// Bank 2
-	if err := s.PhraseCommands.Set(b[phraseCommandsOffset:phraseCommandValuesOffset]); err != nil {
+	if err := s.Phrase.SetCommand(b[phraseCommandsOffset:phraseCommandValuesOffset]); err != nil {
 		return err
 	}
-	if err := s.PhraseCommandValues.Set(b[phraseCommandValuesOffset:emptySpace5]); err != nil {
+	if err := s.Phrase.SetValue(b[phraseCommandValuesOffset:emptySpace5]); err != nil {
 		return err
 	}
 

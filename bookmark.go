@@ -10,6 +10,7 @@ const (
 	noBookmarkValue         = 0xFF
 )
 
+// TODO trova costante del numero di canali, giusto per orientarti dal codice c.
 type Bookmarks [4][bookmarkPerChannelCount]byte
 
 func (bo *Bookmarks) Set(b []byte) error {

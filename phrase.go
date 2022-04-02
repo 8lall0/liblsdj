@@ -15,13 +15,14 @@ const (
 const phraseAllocationsLength = 0x20     // 20
 const phraseCommandsLength = 0x0ff0      // 4080
 const phraseCommandValuesLength = 0x0ff0 // 4080
-const phraseInstrumentsLength = 0xFF0    // Inserito io
 
 type Phrases [phraseCount][phraseLength]byte
-type PhraseCommands [phraseCommandsLength]byte
-type PhraseCommandValues [phraseCommandValuesLength]byte
+type Phrase [phraseCount]struct {
+	Command [phraseLength]byte
+	Value   [phraseLength]byte
+}
+type PhraseInstruments [phraseCount * phraseLength]byte
 type PhraseAllocations [phraseAllocationsLength]byte
-type PhraseInstruments [phraseInstrumentsLength]byte
 
 func (p *Phrases) Set(b []byte) error {
 	if len(b) != phraseCount*phraseLength {
@@ -35,42 +36,46 @@ func (p *Phrases) Set(b []byte) error {
 	return nil
 }
 
-func (p *PhraseAllocations) Set(b []byte) error {
-	if len(b) != phraseAllocationsLength {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), phraseAllocationsLength))
-	}
-
-	copy(p[:], b[:])
-
-	return nil
-}
-
-func (p *PhraseCommands) Set(b []byte) error {
-	if len(b) != phraseCommandsLength {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), phraseCommandsLength))
-	}
-
-	copy(p[:], b[:])
-
-	return nil
-}
-
-func (p *PhraseCommandValues) Set(b []byte) error {
-	if len(b) != phraseCommandValuesLength {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), phraseCommandValuesLength))
-	}
-
-	copy(p[:], b[:])
-
-	return nil
-}
-
 func (p *PhraseInstruments) Set(b []byte) error {
-	if len(b) != phraseInstrumentsLength {
-		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), phraseInstrumentsLength))
+	if len(b) != phraseCount*phraseLength {
+		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), phraseCount*phraseLength))
 	}
 
 	copy(p[:], b[:])
+
+	return nil
+}
+
+func (p *Phrase) SetCommand(b []byte) error {
+	if len(b) != phraseCount*phraseLength {
+		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), phraseCount*phraseLength))
+	}
+
+	for i := 0; i < 4; i++ {
+		copy(p[i].Command[:], b[i:phraseLength*i])
+	}
+
+	return nil
+}
+
+func (p *Phrase) SetValue(b []byte) error {
+	if len(b) != phraseCount*phraseLength {
+		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), phraseCount*phraseLength))
+	}
+
+	for i := 0; i < 4; i++ {
+		copy(p[i].Value[:], b[i:phraseLength*i])
+	}
+
+	return nil
+}
+
+func (pa *PhraseAllocations) Set(b []byte) error {
+	if len(b) != phraseAllocationsLength {
+		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(b), phraseAllocationsLength))
+	}
+
+	copy(pa[:], b[:])
 
 	return nil
 }
