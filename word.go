@@ -25,7 +25,7 @@ func setWords(names, values []byte) ([]Word, error) {
 
 	for i := 0; i < wordCount; i++ {
 		wo[i].name = names[i*wordNameLength : (i+1)*wordNameLength]
-		wo[i].value = names[i*wordValueLength : (i+1)*wordValueLength]
+		wo[i].value = values[i*wordValueLength : (i+1)*wordValueLength]
 	}
 
 	return wo, nil

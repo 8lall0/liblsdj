@@ -2,23 +2,23 @@ package liblsdj
 
 import "fmt"
 
-// WriteSong TODO - DESIDERATA: Ristruttura in modo che siano i singoli tipi a restituire il giusto slice?
+var b [0x8000]byte
+
+// WriteSong TODO - DESIDERATA: Ristruttura, così è orribile. Però fa il suo dovere.
 func WriteSong(s *Song) ([]byte, error) {
-	b := make([]byte, 0x8000)
 
-	s.writeRb(b)
-	s.writePhrases(b)
-	s.writeChains(b)
-	s.writeTables(b)
-	s.writeInstruments(b)
-	s.writeWords(b)
-	s.writeAllocations(b)
-	s.writeWaves(b)
-	s.writeGrooves(b)
-	s.writeBookmarks(b)
+	s.writePhrases()
+	s.writeChains()
+	s.writeTables()
+	s.writeInstruments()
+	s.writeWords()
+	s.writeAllocations()
+	s.writeWaves()
+	s.writeGrooves()
+	s.writeBookmarks()
 
-	appendTo(b, s.SynthParams, synthParamsOffset)
-	appendTo(b, s.ChainAssignments.Get(), chainAssignmentsOffset)
+	appendTo(s.SynthParams, synthParamsOffset)
+	appendTo(s.ChainAssignments.Get(), chainAssignmentsOffset)
 
 	b[workHoursOffset] = s.WorkHours
 	b[workMinutesOffset] = s.WorkMinutes
@@ -37,22 +37,27 @@ func WriteSong(s *Song) ([]byte, error) {
 	b[fileChangedOffset] = s.FileChanged
 	b[powerSaveOffset] = s.PowerSave
 	b[prelistenOffset] = s.PreListen
-	appendTo(b, s.SynthOverwrites, synthOverwritesOffset)
+	appendTo(s.SynthOverwrites, synthOverwritesOffset)
 	b[drumMaxOffset] = s.DrumMax
 	b[formatVersionOffset] = s.FormatVersion
 
-	if !checkRB(b) {
+	appendTo([]byte{255, 255, 255, 255}, 0x3FC6)
+
+	s.writeRb()
+	if !checkRB(b[:]) {
 		fmt.Println("Errore rb")
 	}
 
-	return b, nil
+	return b[:], nil
 }
 
-func appendTo(buffer, input []byte, index int) {
-	buffer = append(buffer[:index], input...)
+func appendTo(input []byte, index int) {
+	for i, v := range input {
+		b[index+i] = v
+	}
 }
 
-func (s *Song) writePhrases(b []byte) {
+func (s *Song) writePhrases() {
 	phrases := make([]byte, 0)
 	commands := make([]byte, 0)
 	values := make([]byte, 0)
@@ -61,27 +66,27 @@ func (s *Song) writePhrases(b []byte) {
 	for _, v := range s.Phrases {
 		phrases = append(phrases, v.Phrase[:]...)
 		commands = append(commands, v.Command[:]...)
-		values = append(phrases, v.Value[:]...)
-		instruments = append(phrases, v.Instruments[:]...)
+		values = append(values, v.Value[:]...)
+		instruments = append(instruments, v.Instruments[:]...)
 	}
 
-	appendTo(b, phrases, phraseNotesOffset)
-	appendTo(b, commands, phraseCommandsOffset)
-	appendTo(b, values, phraseCommandValuesOffset)
-	appendTo(b, instruments, phraseInstrumentsOffset)
+	appendTo(phrases, phraseNotesOffset)
+	appendTo(commands, phraseCommandsOffset)
+	appendTo(values, phraseCommandValuesOffset)
+	appendTo(instruments, phraseInstrumentsOffset)
 }
 
-func (s *Song) writeBookmarks(b []byte) {
+func (s *Song) writeBookmarks() {
 	bookm := make([]byte, 0)
 
 	for _, v := range s.Bookmarks {
 		bookm = append(bookm, v...)
 	}
 
-	appendTo(b, bookm, bookmarksOffset)
+	appendTo(bookm, bookmarksOffset)
 }
 
-func (s *Song) writeChains(b []byte) {
+func (s *Song) writeChains() {
 	phrases := make([]byte, 0)
 	transpositions := make([]byte, 0)
 
@@ -90,18 +95,18 @@ func (s *Song) writeChains(b []byte) {
 		transpositions = append(transpositions, v.transposition[:]...)
 	}
 
-	appendTo(b, phrases, chainPhrasesOffset)
-	appendTo(b, transpositions, chainTranspositionsOffset)
+	appendTo(phrases, chainPhrasesOffset)
+	appendTo(transpositions, chainTranspositionsOffset)
 }
 
-func (s *Song) writeAllocations(b []byte) {
-	appendTo(b, s.AllocationTable.Phrases, phraseAllocationsOffset)
-	appendTo(b, s.AllocationTable.Chains, chainAllocationsOffset)
-	appendTo(b, s.AllocationTable.Instruments, instrumentAllocationTableOffset)
-	appendTo(b, s.AllocationTable.Tables, tableAllocationTableOffset)
+func (s *Song) writeAllocations() {
+	appendTo(s.AllocationTable.Phrases, phraseAllocationsOffset)
+	appendTo(s.AllocationTable.Chains, chainAllocationsOffset)
+	appendTo(s.AllocationTable.Instruments, instrumentAllocationTableOffset)
+	appendTo(s.AllocationTable.Tables, tableAllocationTableOffset)
 }
 
-func (s *Song) writeWords(b []byte) {
+func (s *Song) writeWords() {
 	values := make([]byte, 0)
 	names := make([]byte, 0)
 
@@ -110,31 +115,31 @@ func (s *Song) writeWords(b []byte) {
 		names = append(names, v.name[:]...)
 	}
 
-	appendTo(b, values, wordsOffset)
-	appendTo(b, names, wordNamesOffset)
+	appendTo(values, wordsOffset)
+	appendTo(names, wordNamesOffset)
 }
 
-func (s *Song) writeGrooves(b []byte) {
+func (s *Song) writeGrooves() {
 	grooves := make([]byte, 0)
 
 	for _, v := range s.Grooves {
 		grooves = append(grooves, v[:]...)
 	}
 
-	appendTo(b, grooves, groovesOffset)
+	appendTo(grooves, groovesOffset)
 }
 
-func (s *Song) writeWaves(b []byte) {
+func (s *Song) writeWaves() {
 	waves := make([]byte, 0)
 
 	for _, v := range s.Waves {
 		waves = append(waves, v[:]...)
 	}
 
-	appendTo(b, waves, wavesOffset)
+	appendTo(waves, wavesOffset)
 }
 
-func (s *Song) writeInstruments(b []byte) {
+func (s *Song) writeInstruments() {
 	names := make([]byte, 0)
 	params := make([]byte, 0)
 
@@ -143,11 +148,11 @@ func (s *Song) writeInstruments(b []byte) {
 		params = append(params, v.Params[:]...)
 	}
 
-	appendTo(b, params, instrumentParamsOffset)
-	appendTo(b, names, instrumentNamesOffset)
+	appendTo(params, instrumentParamsOffset)
+	appendTo(names, instrumentNamesOffset)
 }
 
-func (s *Song) writeTables(b []byte) {
+func (s *Song) writeTables() {
 	envelopes := make([]byte, 0)
 	transpositions := make([]byte, 0)
 	col1com := make([]byte, 0)
@@ -164,15 +169,15 @@ func (s *Song) writeTables(b []byte) {
 		col2val = append(col2val, v.Col2.Value[:]...)
 	}
 
-	appendTo(b, envelopes, tableEnvelopesOffset)
-	appendTo(b, transpositions, tableTranspositionOffset)
-	appendTo(b, col1com, tableCommand1Offset)
-	appendTo(b, col1val, tableCommand1ValueOffset)
-	appendTo(b, col2com, tableCommand2Offset)
-	appendTo(b, col2val, tableCommand2ValueOffset)
+	appendTo(envelopes, tableEnvelopesOffset)
+	appendTo(transpositions, tableTranspositionOffset)
+	appendTo(col1com, tableCommand1Offset)
+	appendTo(col1val, tableCommand1ValueOffset)
+	appendTo(col2com, tableCommand2Offset)
+	appendTo(col2val, tableCommand2ValueOffset)
 }
 
-func (s *Song) writeRb(b []byte) {
+func (s *Song) writeRb() {
 	offsets := []int{Rb1Offset, Rb2Offset, Rb3Offset}
 
 	for _, i := range offsets {

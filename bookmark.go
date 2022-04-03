@@ -18,7 +18,7 @@ func setBookmarks(b []byte) ([]Bookmark, error) {
 
 	bo := make([]Bookmark, 4)
 	for i := 0; i < 4; i++ {
-		bo[i] = b[i : bookmarkPerChannelCount*i]
+		bo[i] = b[i*bookmarkPerChannelCount : bookmarkPerChannelCount*(i+1)]
 	}
 
 	return bo, nil

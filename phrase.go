@@ -37,10 +37,18 @@ func setPhrases(phrases, commands, values, instruments []byte) ([]Phrase, error)
 
 	p := make([]Phrase, phraseCount)
 	for i := 0; i < phraseCount; i++ {
-		copy(p[i].Phrase[:], phrases[i:phraseLength*i])
-		copy(p[i].Command[:], commands[i:phraseLength*i])
-		copy(p[i].Value[:], values[i:phraseLength*i])
-		copy(p[i].Instruments[:], instruments[i:phraseLength*i])
+		for c, v := range phrases[i*phraseLength : phraseLength*(i+1)] {
+			p[i].Phrase[c] = v
+		}
+		for c, v := range commands[i*phraseLength : phraseLength*(i+1)] {
+			p[i].Command[c] = v
+		}
+		for c, v := range values[i*phraseLength : phraseLength*(i+1)] {
+			p[i].Value[c] = v
+		}
+		for c, v := range instruments[i*phraseLength : phraseLength*(i+1)] {
+			p[i].Instruments[c] = v
+		}
 	}
 
 	return p, nil

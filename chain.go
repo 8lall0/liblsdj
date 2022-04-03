@@ -19,19 +19,19 @@ type Chain struct {
 }
 
 func setChains(phrases, transpositions []byte) ([]Chain, error) {
-	totalLength := (0x7F + 1) * 16
+	totalLength := 0x7F
 
-	if len(phrases) != totalLength {
+	/*if len(phrases) != totalLength {
 		return nil, fmt.Errorf("unexpected chain phrases length; expected: %v, got: %v", len(phrases), totalLength)
 	} else if len(transpositions) != totalLength {
 		return nil, fmt.Errorf("unexpected chain transpositions length; expected: %v, got: %v", len(transpositions), totalLength)
-	}
+	}*/
 
 	// ChainPhrases Format: [0..15 for 00, 0..15 for 01 etc]
-	c := make([]Chain, totalLength)
+	c := make([]Chain, totalLength+1)
 	for i := 0; i < 0x7F+1; i++ {
-		copy(c[i].phrase[:], phrases[i:phraseLength*i])
-		copy(c[i].transposition[:], transpositions[i:phraseLength*i])
+		copy(c[i].phrase[:], phrases[i*chainLength:chainLength*(i+1)])
+		copy(c[i].transposition[:], transpositions[i*chainLength:chainLength*(i+1)])
 	}
 
 	return c, nil
@@ -50,10 +50,10 @@ func (c *ChainAssignments) Set(b []byte) error {
 		return errors.New(fmt.Sprintf("unexpected length: %v, %v", len(b), 4*chainAssignLength))
 	}
 
-	c.Pulse1 = make([]byte, chainAssignLength)
-	c.Pulse2 = make([]byte, chainAssignLength)
-	c.Wave = make([]byte, chainAssignLength)
-	c.Noise = make([]byte, chainAssignLength)
+	c.Pulse1 = make([]byte, 0)
+	c.Pulse2 = make([]byte, 0)
+	c.Wave = make([]byte, 0)
+	c.Noise = make([]byte, 0)
 
 	for i := 0; i < len(b)/4; i++ {
 		c.Pulse1 = append(c.Pulse1, b[4*i])
@@ -66,12 +66,7 @@ func (c *ChainAssignments) Set(b []byte) error {
 }
 
 func (c *ChainAssignments) Get() []byte {
-	b := make([]byte, 4*chainAssignLength)
-
-	c.Pulse1 = make([]byte, chainAssignLength)
-	c.Pulse2 = make([]byte, chainAssignLength)
-	c.Wave = make([]byte, chainAssignLength)
-	c.Noise = make([]byte, chainAssignLength)
+	b := make([]byte, 0)
 
 	for i := 0; i < chainAssignLength; i++ {
 		b = append(b, c.Pulse1[i])

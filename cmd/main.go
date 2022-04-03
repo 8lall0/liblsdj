@@ -51,18 +51,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	song2, _ := liblsdj.WriteSong(song)
 
-	cnt := 0
-	for i := 0; i < len(songData); i++ {
-		if songData[i] != song2[i] {
-			cnt++
-		}
-	}
-	fmt.Println(cnt)
 	res := bytes.Compare(songData, song2)
-
 	if res == 0 {
 		fmt.Println("!..Slices are equal..!")
 	} else {

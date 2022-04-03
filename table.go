@@ -40,12 +40,12 @@ func setTables(envelopes, transpositions []byte, col1Commands, col1Values, col2C
 
 	p := make([]Table, tableCount)
 	for i := 0; i < tableCount; i++ {
-		copy(p[i].Envelopes[:], envelopes[i:tableLength*i])
-		copy(p[i].Transposition[:], transpositions[i:tableLength*i])
-		copy(p[i].Col1.Command[:], col1Commands[i:tableLength*i])
-		copy(p[i].Col1.Value[:], col1Values[i:tableLength*i])
-		copy(p[i].Col2.Command[:], col2Commands[i:tableLength*i])
-		copy(p[i].Col2.Value[:], col2Values[i:tableLength*i])
+		copy(p[i].Envelopes[:], envelopes[i*tableLength:tableLength*(i+1)])
+		copy(p[i].Transposition[:], transpositions[i*tableLength:tableLength*(i+1)])
+		copy(p[i].Col1.Command[:], col1Commands[i*tableLength:tableLength*(i+1)])
+		copy(p[i].Col1.Value[:], col1Values[i*tableLength:tableLength*(i+1)])
+		copy(p[i].Col2.Command[:], col2Commands[i*tableLength:tableLength*(i+1)])
+		copy(p[i].Col2.Value[:], col2Values[i*tableLength:tableLength*(i+1)])
 	}
 
 	return p, nil

@@ -21,7 +21,7 @@ func setGrooves(grooves []byte) ([]Groove, error) {
 
 	gr := make([]Groove, grooveCount+1)
 	for i := 0; i < grooveCount+1; i++ {
-		copy(gr[i][:], grooves[i:grooveLength*i])
+		copy(gr[i][:], grooves[i*grooveLength:grooveLength*(i+1)])
 	}
 
 	return gr, nil
