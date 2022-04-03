@@ -18,7 +18,7 @@ Every architecture supported by Go should work fine.
 **not ready yet**
 
 ## Todo
-- [ ] Read from .sav
+- [x] Read from .sav
 - [ ] Write to .sav
 - [ ] Read song from .lsdsng
 - [ ] Write song onto .lsdsng
