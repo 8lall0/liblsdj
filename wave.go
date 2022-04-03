@@ -14,7 +14,7 @@ type Wave [16]byte
 
 func setWaves(waves []byte) ([]Wave, error) {
 	if len(waves) != 4096 {
-		return nil, fmt.Errorf("unexpected phrase length: %v, %v", len(waves), 4096)
+		return nil, fmt.Errorf("unexpected Phrase length: %v, %v", len(waves), 4096)
 	}
 
 	wv := make([]Wave, 4096/16)

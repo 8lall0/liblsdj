@@ -16,7 +16,7 @@ const (
 func setGrooves(grooves []byte) ([]Groove, error) {
 	// Adding +1, have to learn about grooves
 	if len(grooves) != (grooveCount+1)*grooveLength {
-		return nil, fmt.Errorf("unexpected phrase length: %v, %v", len(grooves), (grooveCount+1)*grooveLength)
+		return nil, fmt.Errorf("unexpected Phrase length: %v, %v", len(grooves), (grooveCount+1)*grooveLength)
 	}
 
 	gr := make([]Groove, grooveCount+1)

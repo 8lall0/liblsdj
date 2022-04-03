@@ -1,7 +1,6 @@
 package liblsdj
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -14,18 +13,19 @@ type AllocationTable struct {
 
 func (a *AllocationTable) Set(phrases, chains, instruments, tables []byte) error {
 	if len(phrases) != phraseAllocationsLength {
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(phrases), phraseAllocationsLength))
+		return fmt.Errorf("unexpected Phrase length: %v, %v", len(phrases), phraseAllocationsLength)
 	} else if len(chains) != 16 { // TODO TROVA
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(chains), phraseAllocationsLength))
+		return fmt.Errorf("unexpected Phrase length: %v, %v", len(chains), 16)
 	} else if len(instruments) != 64 { // TODO trova
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(instruments), phraseAllocationsLength))
+		return fmt.Errorf("unexpected Phrase length: %v, %v", len(instruments), 64)
 	} else if len(tables) != 32 { // TODO trova
-		return errors.New(fmt.Sprintf("unexpected phrase length: %v, %v", len(tables), phraseAllocationsLength))
+		return fmt.Errorf("unexpected Phrase length: %v, %v", len(tables), 32)
 	}
 
 	a.Phrases = phrases
 	a.Chains = chains
 	a.Instruments = instruments
+	a.Tables = tables
 
 	return nil
 }

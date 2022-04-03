@@ -8,7 +8,7 @@ import (
 const (
 	chainCount    = 0x7F //! The amount of chains in a song, UNUSED MAY BE 0X80
 	chainLength   = 16   //! The number of steps in a chain
-	chainNoPhrase = 0xFF //! The value of "no phrase" at a given step
+	chainNoPhrase = 0xFF //! The value of "no Phrase" at a given step
 
 	chainAssignLength = 0x100
 )
@@ -63,4 +63,22 @@ func (c *ChainAssignments) Set(b []byte) error {
 	}
 
 	return nil
+}
+
+func (c *ChainAssignments) Get() []byte {
+	b := make([]byte, 4*chainAssignLength)
+
+	c.Pulse1 = make([]byte, chainAssignLength)
+	c.Pulse2 = make([]byte, chainAssignLength)
+	c.Wave = make([]byte, chainAssignLength)
+	c.Noise = make([]byte, chainAssignLength)
+
+	for i := 0; i < chainAssignLength; i++ {
+		b = append(b, c.Pulse1[i])
+		b = append(b, c.Pulse2[i])
+		b = append(b, c.Wave[i])
+		b = append(b, c.Noise[i])
+	}
+
+	return b
 }
