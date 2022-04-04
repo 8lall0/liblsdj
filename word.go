@@ -10,8 +10,8 @@ type Words []byte
 type WordNames []byte
 
 type Word struct {
-	name  []byte
-	value []byte
+	name  [wordNameLength]byte
+	value [wordValueLength]byte
 }
 
 func setWords(names, values []byte) ([]Word, error) {
@@ -24,8 +24,8 @@ func setWords(names, values []byte) ([]Word, error) {
 	wo := make([]Word, wordCount)
 
 	for i := 0; i < wordCount; i++ {
-		wo[i].name = names[i*wordNameLength : (i+1)*wordNameLength]
-		wo[i].value = values[i*wordValueLength : (i+1)*wordValueLength]
+		copy(wo[i].name[:], names[i*wordNameLength:(i+1)*wordNameLength])
+		copy(wo[i].value[:], values[i*wordValueLength:(i+1)*wordValueLength])
 	}
 
 	return wo, nil

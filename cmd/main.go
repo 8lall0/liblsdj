@@ -59,5 +59,12 @@ func main() {
 	} else {
 		fmt.Println("!..Slice are not equal..!")
 	}
+
+	reado, _ := liblsdj.Compress(songData)
+	buf := make([]byte, 0x8000)
+	_, _ = reado.Read(buf)
+
+	//fmt.Println(buffer[0x8000+0x200:])
+	fmt.Println(buf)
 	return
 }

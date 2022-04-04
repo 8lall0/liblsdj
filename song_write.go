@@ -6,7 +6,7 @@ var b [0x8000]byte
 
 // WriteSong TODO - DESIDERATA: Ristruttura, così è orribile. Però fa il suo dovere.
 func WriteSong(s *Song) ([]byte, error) {
-
+	s.writeRb()
 	s.writePhrases()
 	s.writeChains()
 	s.writeTables()
@@ -41,9 +41,9 @@ func WriteSong(s *Song) ([]byte, error) {
 	b[drumMaxOffset] = s.DrumMax
 	b[formatVersionOffset] = s.FormatVersion
 
+	// TODO capire come funziona emptySpace3
 	appendTo([]byte{255, 255, 255, 255}, 0x3FC6)
 
-	s.writeRb()
 	if !checkRB(b[:]) {
 		fmt.Println("Errore rb")
 	}
@@ -80,7 +80,7 @@ func (s *Song) writeBookmarks() {
 	bookm := make([]byte, 0)
 
 	for _, v := range s.Bookmarks {
-		bookm = append(bookm, v...)
+		bookm = append(bookm, v[:]...)
 	}
 
 	appendTo(bookm, bookmarksOffset)
@@ -100,10 +100,10 @@ func (s *Song) writeChains() {
 }
 
 func (s *Song) writeAllocations() {
-	appendTo(s.AllocationTable.Phrases, phraseAllocationsOffset)
-	appendTo(s.AllocationTable.Chains, chainAllocationsOffset)
-	appendTo(s.AllocationTable.Instruments, instrumentAllocationTableOffset)
-	appendTo(s.AllocationTable.Tables, tableAllocationTableOffset)
+	appendTo(s.AllocationTable.Phrases[:], phraseAllocationsOffset)
+	appendTo(s.AllocationTable.Chains[:], chainAllocationsOffset)
+	appendTo(s.AllocationTable.Instruments[:], instrumentAllocationTableOffset)
+	appendTo(s.AllocationTable.Tables[:], tableAllocationTableOffset)
 }
 
 func (s *Song) writeWords() {

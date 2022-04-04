@@ -17,8 +17,8 @@ type InstrumentParams [instrumentCount * instrumentByteCount]byte
 type InstrumentNames [instrumentCount][instrumentNameLength]byte
 
 type Instrument struct {
-	Name   []byte
-	Params []byte
+	Name   [instrumentNameLength]byte
+	Params [instrumentByteCount]byte
 }
 
 func setInstruments(names, params []byte) ([]Instrument, error) {
@@ -30,11 +30,10 @@ func setInstruments(names, params []byte) ([]Instrument, error) {
 
 	in := make([]Instrument, instrumentCount)
 	for i := 0; i < len(names)/instrumentNameLength; i++ {
-		in[i].Name = names[instrumentNameLength*i : instrumentNameLength*(i+1)]
-
+		copy(in[i].Name[:], names[instrumentNameLength*i:instrumentNameLength*(i+1)])
 	}
 	for i := 0; i < len(params)/instrumentByteCount; i++ {
-		in[i].Params = params[instrumentByteCount*i : instrumentByteCount*(i+1)]
+		copy(in[i].Params[:], params[instrumentByteCount*i:instrumentByteCount*(i+1)])
 	}
 
 	return in, nil

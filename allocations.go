@@ -5,10 +5,10 @@ import (
 )
 
 type AllocationTable struct {
-	Phrases     []byte
-	Chains      []byte
-	Instruments []byte
-	Tables      []byte
+	Phrases     [phraseAllocationsLength]byte
+	Chains      [16]byte
+	Instruments [64]byte
+	Tables      [32]byte
 }
 
 func (a *AllocationTable) Set(phrases, chains, instruments, tables []byte) error {
@@ -22,10 +22,10 @@ func (a *AllocationTable) Set(phrases, chains, instruments, tables []byte) error
 		return fmt.Errorf("unexpected Phrase length: %v, %v", len(tables), 32)
 	}
 
-	a.Phrases = phrases
-	a.Chains = chains
-	a.Instruments = instruments
-	a.Tables = tables
+	copy(a.Phrases[:], phrases)
+	copy(a.Chains[:], chains)
+	copy(a.Instruments[:], instruments)
+	copy(a.Tables[:], tables)
 
 	return nil
 }

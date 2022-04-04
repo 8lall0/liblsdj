@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	chainCount    = 0x7F //! The amount of chains in a song, UNUSED MAY BE 0X80
-	chainLength   = 16   //! The number of steps in a chain
-	chainNoPhrase = 0xFF //! The value of "no Phrase" at a given step
+	chainCount    = 0x7F + 1 //! The amount of chains in a song, UNUSED MAY BE 0X80
+	chainLength   = 16       //! The number of steps in a chain
+	chainNoPhrase = 0xFF     //! The value of "no Phrase" at a given step
 
 	chainAssignLength = 0x100
 )
@@ -19,17 +19,15 @@ type Chain struct {
 }
 
 func setChains(phrases, transpositions []byte) ([]Chain, error) {
-	totalLength := 0x7F
-
-	/*if len(phrases) != totalLength {
-		return nil, fmt.Errorf("unexpected chain phrases length; expected: %v, got: %v", len(phrases), totalLength)
-	} else if len(transpositions) != totalLength {
-		return nil, fmt.Errorf("unexpected chain transpositions length; expected: %v, got: %v", len(transpositions), totalLength)
-	}*/
+	if len(phrases) != chainCount*chainLength {
+		return nil, fmt.Errorf("unexpected chain phrases length; expected: %v, got: %v", len(phrases), chainCount*chainLength)
+	} else if len(transpositions) != chainCount*chainLength {
+		return nil, fmt.Errorf("unexpected chain transpositions length; expected: %v, got: %v", len(transpositions), chainCount*chainLength)
+	}
 
 	// ChainPhrases Format: [0..15 for 00, 0..15 for 01 etc]
-	c := make([]Chain, totalLength+1)
-	for i := 0; i < 0x7F+1; i++ {
+	c := make([]Chain, chainCount)
+	for i := 0; i < chainCount; i++ {
 		copy(c[i].phrase[:], phrases[i*chainLength:chainLength*(i+1)])
 		copy(c[i].transposition[:], transpositions[i*chainLength:chainLength*(i+1)])
 	}
