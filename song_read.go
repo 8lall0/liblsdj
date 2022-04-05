@@ -15,6 +15,12 @@ func ReadSong(b []byte) (*Song, error) {
 	}
 
 	s := new(Song)
+	s.emptyspace1 = b[emptySpace1:tableAllocationTableOffset]
+	s.emptyspace2 = b[emptySpace2:cloneModeOffset]
+	s.emptyspace3 = b[emptySpace3:drumMaxOffset]
+	s.emptyspace4 = b[emptySpace4:phraseCommandsOffset]
+	s.emptyspace5 = b[emptySpace5:wavesOffset]
+	s.emptyspace6 = b[emptySpace6:formatVersionOffset]
 
 	if err := s.setPhrases(b); err != nil {
 		return nil, err

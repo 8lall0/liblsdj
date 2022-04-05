@@ -77,6 +77,7 @@ const (
 const (
 	wavesOffset             = 0x6000
 	phraseInstrumentsOffset = 0x7000
-	Rb3Offset               = 0x7FF0 // Empty 0x7FF2
+	Rb3Offset               = 0x7FF0
+	emptySpace6             = 0x7FF2
 	formatVersionOffset     = 0x7FFF
 )

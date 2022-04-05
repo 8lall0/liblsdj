@@ -40,9 +40,7 @@ func WriteSong(s *Song) ([]byte, error) {
 	appendTo(s.SynthOverwrites, synthOverwritesOffset)
 	b[drumMaxOffset] = s.DrumMax
 	b[formatVersionOffset] = s.FormatVersion
-
-	// TODO capire come funziona emptySpace3
-	appendTo([]byte{255, 255, 255, 255}, 0x3FC6)
+	s.writeEmptySpaces()
 
 	if !checkRB(b[:]) {
 		fmt.Println("Errore rb")
@@ -184,4 +182,13 @@ func (s *Song) writeRb() {
 		b[i] = 'r'
 		b[i+1] = 'b'
 	}
+}
+
+func (s *Song) writeEmptySpaces() {
+	appendTo(s.emptyspace1, emptySpace1)
+	appendTo(s.emptyspace2, emptySpace2)
+	appendTo(s.emptyspace3, emptySpace3)
+	appendTo(s.emptyspace4, emptySpace4)
+	appendTo(s.emptyspace5, emptySpace5)
+	appendTo(s.emptyspace6, emptySpace6)
 }

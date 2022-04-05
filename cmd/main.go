@@ -32,11 +32,11 @@ func main() {
 	filesize := fileinfo.Size()
 	buffer := make([]byte, filesize)
 
-	bytesread, err := file.Read(buffer)
+	_, err = file.Read(buffer)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("bytes read: ", bytesread)
+	//fmt.Println("bytes read: ", bytesread)
 
 	fileBytes := bytes.NewReader(buffer[0x8000+0x200:])
 	dec, err := liblsdj.Decompress(fileBytes)
@@ -65,6 +65,6 @@ func main() {
 	_, _ = reado.Read(buf)
 
 	//fmt.Println(buffer[0x8000+0x200:])
-	fmt.Println(buf)
+	//fmt.Println(buf)
 	return
 }

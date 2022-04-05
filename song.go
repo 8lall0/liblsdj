@@ -34,4 +34,10 @@ type Song struct {
 	SynthOverwrites   []byte
 	DrumMax           byte
 	FormatVersion     byte
+	emptyspace1       []byte
+	emptyspace2       []byte
+	emptyspace3       []byte
+	emptyspace4       []byte
+	emptyspace5       []byte
+	emptyspace6       []byte
 }
