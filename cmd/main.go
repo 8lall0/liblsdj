@@ -60,11 +60,23 @@ func main() {
 		fmt.Println("!..Slice are not equal..!")
 	}
 
-	reado, _ := liblsdj.Compress(songData)
+	reado, _ := liblsdj.Compress(song2)
 	buf := make([]byte, 0x8000)
 	_, _ = reado.Read(buf)
 
-	//fmt.Println(buffer[0x8000+0x200:])
-	//fmt.Println(buf)
+	outto := make([]byte, 131072)
+	for i := 0; i < len(outto); i++ {
+		if i < 0x8000+0x200 {
+			outto[i] = buffer[i]
+		} else {
+			for j := 0; j < len(buf) && i+j < len(outto); j++ {
+				outto[i+j] = buf[j]
+			}
+			i += len(buf)
+		}
+	}
+	f, _ := os.Create("ciccio.sav")
+	f.Write(outto)
+	f.Close()
 	return
 }
