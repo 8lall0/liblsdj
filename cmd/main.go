@@ -53,13 +53,6 @@ func main() {
 	}
 	song2, _ := liblsdj.WriteSong(song)
 
-	res := bytes.Compare(songData, song2)
-	if res == 0 {
-		fmt.Println("!..Slices are equal..!")
-	} else {
-		fmt.Println("!..Slice are not equal..!")
-	}
-
 	reado, _ := liblsdj.Compress(song2)
 	buf := make([]byte, 0x8000)
 	_, _ = reado.Read(buf)

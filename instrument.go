@@ -9,7 +9,7 @@ const (
 	instrumentByteCount           = 16   //! The amount of bytes an instrument takes
 	instrumentNameLength          = 5    //! The amount of bytes an instrument name takes
 	instrumentPulseLengthInfinite = 0x40 //! The value of an infinite pulse length
-	instrumentKitLengthAuto       = 0x0  //! The value of a kit length set to AUTO
+	instrumentKitLengthAuto       = 0x0  //! The value of a InstrumentKit length set to AUTO
 	instrumentNoiseLengthInfinite = 0x40 //! The value of an infinite noise length
 )
 
