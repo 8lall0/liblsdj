@@ -1,13 +1,37 @@
 package liblsdj
 
-type instrwave int
+const (
+	instrumentWaveVolume0  = 0x00
+	instrumentWaveVolume1  = 0x60
+	instrumentWaveVolume2  = 0x40
+	instrumentWaveVolume3  = 0xA8
+	instrumentWavePlayOnce = iota
+	instrumentWavePlayLoop
+	instrumentWavePlayPingPong
+	instrumentWavePlayManual
+)
 
-func (i *instrwave) setGetVolume() {
+type WaveInstrument struct {
+	params [instrumentByteCount]byte
+}
+
+func (w *WaveInstrument) setParams(b []byte) {
+	if len(b) != instrumentByteCount {
+		// do nothing
+	}
+	copy(w.params[:], b)
+}
+
+func (w *WaveInstrument) getParamsBytes() []byte {
+	return w.params[:]
+}
+
+func (w *WaveInstrument) setGetVolume() {
 	// set: set_instrument_bits(song, instrument, 1, 0, 8, volume);
 	// get: return get_instrument_bits(song, instrument, 1, 0, 8);
 }
 
-func (i *instrwave) setGetSynth() {
+func (w *WaveInstrument) setGetSynth() {
 	// set:
 	//if (lsdj_song_get_format_version(song) >= 16)
 	//	set_instrument_bits(song, instrument, 3, 0, 8, (uint8_t)(synth << 4));
@@ -19,12 +43,12 @@ func (i *instrwave) setGetSynth() {
 	//return get_instrument_bits(song, instrument, 2, 4, 4);
 }
 
-func (i *instrwave) getSetWave() {
+func (w *WaveInstrument) getSetWave() {
 	//set:	set_instrument_bits(song, instrument, 3, 0, 8, wave);
 	// get: return get_instrument_bits(song, instrument, 3, 0, 8);
 }
 
-func (i *instrwave) getSetPlayMode() {
+func (w *WaveInstrument) getSetPlayMode() {
 	//set: if (lsdj_song_get_format_version(song) >= 10)
 	//set_instrument_bits(song, instrument, 9, 0, 2, ((((uint8_t)mode) + 1) & 0x3));
 	//else
@@ -36,7 +60,7 @@ func (i *instrwave) getSetPlayMode() {
 	//return (lsdj_wave_play_mode_t)get_instrument_bits(song, instrument, 9, 0, 2);
 }
 
-func (i *instrwave) getSetLength() {
+func (w *WaveInstrument) getSetLength() {
 	//set:const uint8_t version = lsdj_song_get_format_version(song);
 	//if (version >= 7)
 	//set_instrument_bits(song, instrument, 10, 0, 4, 0xF - length);
@@ -55,7 +79,7 @@ func (i *instrwave) getSetLength() {
 	//return get_instrument_bits(song, instrument, 14, 4, 4);
 }
 
-func (i *instrwave) getSetLoopPos() {
+func (w *WaveInstrument) getSetLoopPos() {
 	// set: if (lsdj_song_get_format_version(song) >= 9)
 	//set_instrument_bits(song, instrument, 2, 0, 4, pos & 0xF);
 	//else
@@ -69,7 +93,7 @@ func (i *instrwave) getSetLoopPos() {
 	//return (byte & 0xF) ^ 0x0F;
 }
 
-func (i *instrwave) setGetRepeat() {
+func (w *WaveInstrument) setGetRepeat() {
 	//set: if (lsdj_song_get_format_version(song) >= 9)
 	//	set_instrument_bits(song, instrument, 2, 0, 4, (repeat & 0xF) ^ 0xF);
 	//else
@@ -83,7 +107,7 @@ func (i *instrwave) setGetRepeat() {
 	//return byte & 0xF;
 }
 
-func (i *instrwave) getSetSpeed() {
+func (w *WaveInstrument) getSetSpeed() {
 	//set:
 	//const uint8_t version = lsdj_song_get_format_version(song);
 	//

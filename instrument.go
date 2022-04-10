@@ -5,20 +5,28 @@ import (
 )
 
 const (
-	instrumentCount               = 0x40 //! The amount of instruments in a song
-	instrumentByteCount           = 16   //! The amount of bytes an instrument takes
-	instrumentNameLength          = 5    //! The amount of bytes an instrument name takes
-	instrumentPulseLengthInfinite = 0x40 //! The value of an infinite pulse length
-	instrumentKitLengthAuto       = 0x0  //! The value of a InstrumentKit length set to AUTO
-	instrumentNoiseLengthInfinite = 0x40 //! The value of an infinite noise length
+	instrumentCount      = 0x40 //! The amount of instruments in a song
+	instrumentByteCount  = 16   //! The amount of bytes an instrument takes
+	instrumentNameLength = 5    //! The amount of bytes an instrument name takes
 )
 
-type InstrumentParams [instrumentCount * instrumentByteCount]byte
-type InstrumentNames [instrumentCount][instrumentNameLength]byte
+const (
+	//! The kind of instrument types that exist
+	instrumentTypePulse = iota
+	instrumentTypeWave
+	instrumentTypeKit
+	instrumentTypeNoise
+)
+
+type InstrumentInterface interface {
+	setParams(b []byte)
+	getParamsBytes() []byte
+}
 
 type Instrument struct {
-	Name   [instrumentNameLength]byte
-	Params [instrumentByteCount]byte
+	Name       [instrumentNameLength]byte
+	Params     [instrumentByteCount]byte
+	Instrument InstrumentInterface
 }
 
 func setInstruments(names, params []byte) ([]Instrument, error) {
@@ -34,18 +42,26 @@ func setInstruments(names, params []byte) ([]Instrument, error) {
 	}
 	for i := 0; i < len(params)/instrumentByteCount; i++ {
 		copy(in[i].Params[:], params[instrumentByteCount*i:instrumentByteCount*(i+1)])
+
+		var instr InstrumentInterface
+		switch params[instrumentByteCount*i] {
+		case instrumentTypePulse:
+			instr = new(PulseInstrument)
+		case instrumentTypeNoise:
+			instr = new(NoiseInstrument)
+		case instrumentTypeWave:
+			instr = new(WaveInstrument)
+		case instrumentTypeKit:
+			instr = new(KitInstrument)
+		}
+
+		instr.setParams(params[instrumentByteCount*i : instrumentByteCount*(i+1)])
+
+		in[i].Instrument = instr
 	}
 
 	return in, nil
 }
-
-//! The kind of instrument types that exist
-const (
-	instrumentTypePulse = iota
-	instrumentTypeWave
-	instrumentTypeKit
-	instrumentTypeNoise
-)
 
 const (
 	instrumentTablePlay = iota
@@ -53,24 +69,11 @@ const (
 )
 
 const (
-	instrumentWaveVolume0 = 0x00
-	instrumentWaveVolume1 = 0x60
-	instrumentWaveVolume2 = 0x40
-	instrumentWaveVolume3 = 0xA8
-)
-
-const (
-	instrumentPulseWidth125 = iota
-	instrumentPulseWidth25
-	instrumentPulseWidth50
-	instrumentPulseWidth75
-)
-
-const (
 	instrumentVibratoTriangle = iota
 	instrumentVibratoSawtooth
 	instrumentVibratoSquare
 )
+
 const (
 	instrumentVibratoDown = iota
 	instrumentVibratoUp
@@ -81,29 +84,4 @@ const (
 	instrumentPlvTick
 	instrumentPlvStep
 	instrumentPlvDrum
-)
-
-const (
-	instrumentWavePlayOnce = iota
-	instrumentWavePlayLoop
-	instrumentWavePlayPingPong
-	instrumentWavePlayManual
-)
-
-const (
-	instrumentKitLoopOff = iota
-	instrumentKitLoopOn
-	instrumentKitLoopAttack
-)
-
-const (
-	instrumentKitDistortionClip = iota
-	instrumentKitDistortionShape
-	instrumentKitDistortionShape2
-	instrumentKitDistortionWrap
-)
-
-const (
-	instrumentNoiseFree = iota
-	instrumentNoiseStable
 )
