@@ -1,5 +1,7 @@
 package liblsdj
 
+import "fmt"
+
 const (
 	instrumentWaveVolume0  = 0x00
 	instrumentWaveVolume1  = 0x60
@@ -12,7 +14,13 @@ const (
 )
 
 type WaveInstrument struct {
-	params [instrumentByteCount]byte
+	params                 [instrumentByteCount]byte
+	instrType              byte
+	volume                 byte // Può avere solo i valori di cui sopra
+	speed, length, loopPos byte
+	wave                   byte
+	channel                byte // 8° byte left right, 1=L, 2=R, 3=LR
+	play                   byte
 }
 
 func (w *WaveInstrument) setParams(b []byte) {
@@ -20,6 +28,13 @@ func (w *WaveInstrument) setParams(b []byte) {
 		// do nothing
 	}
 	copy(w.params[:], b)
+	w.instrType = b[0]
+	w.volume = b[1]
+	w.wave = b[3]
+	w.channel = b[7]
+	w.play = b[9]
+
+	fmt.Println(w.params)
 }
 
 func (w *WaveInstrument) getParamsBytes() []byte {
