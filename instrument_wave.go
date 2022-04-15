@@ -23,6 +23,30 @@ type WaveInstrument struct {
 	play                   byte
 }
 
+// TODO: Temporary
+type www struct {
+	instrType        byte
+	volume           byte
+	loopPos          byte
+	wave             byte
+	synth            byte
+	pitchSteb        byte
+	pitchDrum        byte
+	transpose        byte
+	pitchSpeed       byte
+	tableSpeed       byte
+	vibratoShape     byte
+	vibratoDirection byte
+	tableOnOff       byte
+	table            byte
+	output           byte
+	cmdRate          byte
+	playType         byte
+	length           byte
+	speed            byte
+	fineTune         byte
+}
+
 func (w *WaveInstrument) setParams(b []byte) {
 	if len(b) != instrumentByteCount {
 		// do nothing
