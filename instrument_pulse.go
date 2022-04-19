@@ -13,28 +13,20 @@ const (
 
 // TODO: temporary structure, probably needing something better
 type PulseInstrument struct {
-	params           [instrumentByteCount]byte
-	instrType        byte
-	env1             byte
-	pu2Tsp           byte
-	lengthUnlimited  byte
-	length           byte
-	sweep            byte
-	pitchStep        byte
-	pitchDrum        byte
-	transpose        byte
-	pitchSpeed       byte
-	tableSpeed       byte
-	vibratoShape     byte
-	vibratoDirection byte
-	tableOn          byte
-	table            byte
-	wave             byte
-	output           byte
-	cmdRate          byte
-	env2             byte
-	env3             byte
-	fineTune         byte
+	params       [instrumentByteCount]byte
+	instrType    byte
+	env1         byte
+	pu2Tsp       byte
+	lengthParams lengthParam
+	sweep        byte
+	byte5        byte5Param
+	tableParam   instrTableParam
+	wave         byte
+	output       byte
+	cmdRate      byte
+	env2         byte
+	env3         byte
+	fineTune     byte
 }
 
 func (p *PulseInstrument) setParams(b []byte) {
@@ -46,12 +38,12 @@ func (p *PulseInstrument) setParams(b []byte) {
 	p.env1 = b[1]
 	p.pu2Tsp = b[2]
 	// Qui c'è anche la lengthUnlimited
-	p.length = b[3]
+	//p.length = b[3]
 	p.sweep = b[4]
 	// Qui ci sono in realtà molti più parametri
-	p.pitchStep = b[5]
+	//p.pitchStep = b[5]
 	// Qui ci sono in realtà molti più parametri
-	p.table = b[6]
+	//p.table = b[6]
 	// Qui ci sono in realtà molti più parametri
 	p.wave = b[7]
 	p.cmdRate = b[8]

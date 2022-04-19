@@ -30,7 +30,7 @@ type www struct {
 	loopPos          byte
 	wave             byte
 	synth            byte
-	pitchSteb        byte
+	pitchStep        byte
 	pitchDrum        byte
 	transpose        byte
 	pitchSpeed       byte
