@@ -1,10 +1,14 @@
 package liblsdj
 
-import "math"
+import "fmt"
 
+// TODO non va bene così
 func getBit(b byte, pos uint) byte {
-	pow := math.Pow(2, float64(pos))
-	return b & byte(pow)
+	mask := 1 << pos
+	if b != 0 {
+		fmt.Println(b & byte(mask))
+	}
+	return b & byte(mask)
 }
 
 func setBit(n byte, pos uint) byte {

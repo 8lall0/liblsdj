@@ -37,14 +37,10 @@ func (p *PulseInstrument) setParams(b []byte) {
 	p.instrType = b[0]
 	p.env1 = b[1]
 	p.pu2Tsp = b[2]
-	// Qui c'è anche la lengthUnlimited
-	//p.length = b[3]
+	p.lengthParams.set(b[3])
 	p.sweep = b[4]
-	// Qui ci sono in realtà molti più parametri
-	//p.pitchStep = b[5]
-	// Qui ci sono in realtà molti più parametri
-	//p.table = b[6]
-	// Qui ci sono in realtà molti più parametri
+	p.byte5.set(b[5])
+	p.tableParam.set(b[6])
 	p.wave = b[7]
 	p.cmdRate = b[8]
 	p.env2 = b[9]
